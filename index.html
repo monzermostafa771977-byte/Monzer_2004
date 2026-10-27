@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Monzer</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Monzer">
+<style>
+:root{--bg:#f4f6f8;--card:#fff;--tx:#1b1f24;--mu:#667085;--pr:#0f766e;--prt:#fff;--bd:#e4e7ec;--wr:#b42318;--wb:#fef3f2;--ok:#067647;--okb:#ecfdf3;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0f1419;--card:#1a2027;--tx:#eef1f4;--mu:#98a2b3;--pr:#2dd4bf;--prt:#052e2b;--bd:#2b333c;--wr:#fda29b;--wb:#3b1512;--ok:#75e0a7;--okb:#12301f}}
+:root[data-theme="dark"]{--bg:#0f1419;--card:#1a2027;--tx:#eef1f4;--mu:#98a2b3;--pr:#2dd4bf;--prt:#052e2b;--bd:#2b333c;--wr:#fda29b;--wb:#3b1512;--ok:#75e0a7;--okb:#12301f}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,"Segoe UI",Tahoma,Arial,sans-serif;font-size:16px}
+main{padding:14px 14px 90px;max-width:560px;margin:auto}
+.brand{display:flex;align-items:center;gap:10px;margin:2px 0 12px}
+.brand svg{width:42px;height:42px;border-radius:11px}
+.brand b{font-size:21px;letter-spacing:.4px;font-family:system-ui,Arial,sans-serif}
+h1{font-size:20px;margin:6px 0 2px}
+h2{font-size:16px;margin:0 0 10px}
+.sub{color:var(--mu);font-size:13px;margin-bottom:12px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:12px}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>*{flex:1;min-width:120px}
+label{display:block;font-size:13px;color:var(--mu);margin:8px 0 4px}
+input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
+button{font:inherit;border:0;border-radius:12px;padding:13px;background:var(--pr);color:var(--prt);font-weight:700;width:100%;margin-top:10px}
+button.sec{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
+button.x{width:auto;margin:0;padding:6px 10px;background:transparent;color:var(--wr);border:1px solid var(--bd);font-weight:400}
+.big{font-size:22px;font-weight:800}
+.warn{background:var(--wb);color:var(--wr);border:1px solid var(--wr);border-radius:12px;padding:12px;margin-bottom:12px;font-weight:700}
+.bd{display:inline-block;font-size:12px;padding:2px 8px;border-radius:99px;margin-inline-start:6px}
+.bd.w{background:var(--wb);color:var(--wr)}
+.bd.o{background:var(--okb);color:var(--ok)}
+.li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 0;border-top:1px solid var(--bd);font-size:14px}
+.li:first-of-type{border-top:0}
+.kv{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
+.kv b{font-weight:700}
+.bar{height:8px;background:var(--bd);border-radius:9px;overflow:hidden;margin-top:4px}
+.bar i{display:block;height:100%;background:var(--pr)}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
+nav a{flex:1;text-align:center;padding:10px 2px;font-size:12px;color:var(--mu);cursor:pointer}
+nav a span{display:block;font-size:20px}
+nav a.on{color:var(--pr);font-weight:700}
+.empty{color:var(--mu);font-size:14px;padding:6px 0}
+#inst{position:fixed;left:14px;right:14px;bottom:78px;z-index:20;display:none;box-shadow:0 4px 18px rgba(0,0,0,.25)}
+.pill{margin-inline-start:auto;font-size:12px;padding:3px 9px;border-radius:99px;background:var(--okb);color:var(--ok);font-family:system-ui,Arial,sans-serif}
+.pill:empty{display:none}
+.pill.off{background:var(--wb);color:var(--wr)}
+</style>
+</head>
+<body>
+<main id="app"></main>
+<nav id="nav"></nav>
+<script>
+var KEY='hodoori_v1',S={salary:0,att:{},leaves:[],ot:[],work:[]},tab='today';
+try{var r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
+function save(){S._ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.schedSync)schedSync()}
+var p2=function(n){return String(n).padStart(2,'0')};
+var ds=function(d){return d.getFullYear()+'-'+p2(d.getMonth()+1)+'-'+p2(d.getDate())};
+var ts=function(d){return p2(d.getHours())+':'+p2(d.getMinutes())};
+var mins=function(t){var a=t.split(':');return +a[0]*60+ +a[1]};
+var V=function(id){var e=document.getElementById(id);return e?e.value:''};
+var QUOTA={annual:30,casual:7,sick:7},NAMES={annual:'سنوية',casual:'عارضة',sick:'مرضية'};
+var IN_MAX='07:50',OUT_MIN='15:50';
+var TABS=[['today','🕗','الحضور'],['leave','🏖️','الإجازات'],['work','⏱️','السهر والأعياد'],['rep','📊','التقرير']];
+
+function qTotal(y,q){return S.leaves.filter(function(l){return +l.date.slice(0,4)==y&&Math.floor((+l.date.slice(5,7)-1)/3)==q}).reduce(function(a,l){return a+l.days},0)}
+function mTotal(ym,t){return S.leaves.filter(function(l){return l.date.slice(0,7)==ym&&(!t||l.type==t)}).reduce(function(a,l){return a+l.days},0)}
+function used(y,t){return S.leaves.filter(function(l){return +l.date.slice(0,4)==y&&l.type==t}).reduce(function(a,l){return a+l.days},0)}
+function qLabel(q){return 'الربع '+(q+1)+' ('+['يناير–مارس','أبريل–يونيو','يوليو–سبتمبر','أكتوبر–ديسمبر'][q]+')'}
+function otHours(o){var h=(Math.min(mins(o.to),1140)-Math.max(mins(o.from),960))/60;return Math.max(0,Math.round(h*100)/100)}
+function daily(){return (+S.salary||0)/30}
+function ovl(a,b,c,d){return Math.max(0,Math.min(b,d)-Math.max(a,c))/60}
+function otPay(o){var f=mins(o.from),t=mins(o.to),hr=(+S.salary||0)/240;return hr*(ovl(f,t,960,1080)*1.35+ovl(f,t,1080,1140)*1.7)}
+function money(n){return Math.round(n).toLocaleString('en-US')}
+function banner(){var n=new Date(),y=n.getFullYear(),q=Math.floor(n.getMonth()/3),t=qTotal(y,q);
+ return t>9?'<div class="warn">⚠️ تحذير: إجمالي إجازاتك في '+qLabel(q)+' هو '+t+' أيام، وهذا أكثر من 9 أيام.</div>':''}
+function dayName(d){return new Date(d+'T12:00:00').toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long'})}
+
+function vToday(){
+ var n=new Date(),d=ds(n),r=S.att[d]||{};
+ var late=r.in&&mins(r.in)>mins(IN_MAX),early=r.out&&mins(r.out)<mins(OUT_MIN);
+ var h='<h1>تسجيل الحضور</h1><div class="sub">'+n.toLocaleDateString('ar-EG',{weekday:'long',day:'numeric',month:'long',year:'numeric'})+'</div>'+banner();
+ h+='<div class="card"><div class="kv"><span>الحضور</span><b class="big">'+(r.in||'--:--')+(r.in?'<span class="bd '+(late?'w':'o')+'">'+(late?'متأخر':'في الموعد')+'</span>':'')+'</b></div>';
+ h+='<div class="kv"><span>الانصراف</span><b class="big">'+(r.out||'--:--')+(r.out?'<span class="bd '+(early?'w':'o')+'">'+(early?'قبل الموعد':'تمام')+'</span>':'')+'</b></div>';
+ h+='<div class="sub" style="margin:6px 0 0">آخر موعد حضور 7:50 ص، والانصراف من 3:50 م</div>';
+ h+='<button data-a="in">تسجيل حضور الآن</button><button data-a="out" class="sec">تسجيل انصراف الآن</button></div>';
+ h+='<div class="card"><h2>إدخال يدوي (لو نسيت التسجيل)</h2><label>التاريخ</label><input type="date" id="md" value="'+d+'"><div class="row"><div><label>الحضور</label><input type="time" id="mi"></div><div><label>الانصراف</label><input type="time" id="mo"></div></div><button data-a="man" class="sec">حفظ</button></div>';
+ var ks=Object.keys(S.att).sort().reverse().slice(0,10);
+ h+='<div class="card"><h2>آخر الأيام</h2>'+(ks.length?ks.map(function(k){var a=S.att[k];return '<div class="li"><span>'+dayName(k)+'<br><small style="color:var(--mu)">'+(a.in||'--')+' ← '+(a.out||'--')+(a.in&&mins(a.in)>mins(IN_MAX)?' • تأخير':'')+'</small></span><button class="x" data-a="delatt" data-k="'+k+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد تسجيلات بعد</div>')+'</div>';
+ return h;
+}
+
+function Q(k){var v=S.quota&&S.quota[k];return (v===undefined||v===null||v==='')?QUOTA[k]:+v}
+function leaveDays(a,b,incl){var out=[],c=new Date(a+'T12:00:00'),e=new Date(b+'T12:00:00');while(c<=e&&out.length<400){var g=c.getDay();if(incl||(g!=5&&g!=6))out.push(ds(c));c.setDate(c.getDate()+1)}return out}
+function vLeave(){
+ var n=new Date(),d=ds(n),y=n.getFullYear(),q=Math.floor(n.getMonth()/3),t=qTotal(y,q);
+ var h='<h1>الإجازات</h1><div class="sub">رصيد سنة '+y+'</div>'+banner();
+ h+='<div class="card"><h2>رصيد إجازاتي السنوي (إدخال يدوي)</h2><div class="sub">أدخل إجمالي الأيام المستحقة لك في السنة حسب شركتك</div><div class="row"><div><label>السنوية</label><input type="number" id="qa" min="0" value="'+Q('annual')+'"></div><div><label>العارضة</label><input type="number" id="qc" min="0" value="'+Q('casual')+'"></div><div><label>المرضية</label><input type="number" id="qs" min="0" value="'+Q('sick')+'"></div></div><button data-a="quota" class="sec">حفظ الأرصدة</button></div>';
+ h+='<div class="card"><h2>الرصيد المتبقي</h2>';
+ Object.keys(QUOTA).forEach(function(k){var u=used(y,k),qt=Q(k),rem=qt-u;h+='<div class="kv"><span>'+NAMES[k]+'</span><b style="'+(rem<0?'color:var(--wr)':'')+'">المتبقي '+rem+' من '+qt+'</b></div><div class="bar"><i style="width:'+(qt>0?Math.min(100,u/qt*100):0)+'%"></i></div>'});
+ h+='<div class="kv" style="margin-top:8px"><span>إجمالي '+qLabel(q)+'</span><b style="'+(t>9?'color:var(--wr)':'')+'">'+t+' يوم</b></div>';
+ h+='<div class="kv"><span>إجمالي هذا الشهر</span><b>'+mTotal(d.slice(0,7))+' يوم</b></div></div>';
+ h+='<div class="card"><h2>تسجيل إجازة</h2><label>النوع</label><select id="lt"><option value="annual">سنوية</option><option value="casual">عارضة</option><option value="sick">مرضية</option></select><div class="row"><div><label>بداية الإجازة</label><input type="date" id="ld" value="'+d+'"></div><div><label>نهاية الإجازة</label><input type="date" id="le" value="'+d+'"></div></div><label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="lw" style="width:auto"> احسب الجمعة والسبت ضمن الإجازة</label><div class="sub" style="margin-top:6px">التطبيق يحسب عدد الأيام تلقائياً من البداية إلى النهاية، ويستثني الجمعة والسبت ما لم تفعّل الخيار.</div><button data-a="leave">حفظ الإجازة</button><div id="lm" class="sub" style="color:var(--wr)"></div></div>';
+ var g={};S.leaves.forEach(function(l){var k=l.gid||l.id;(g[k]=g[k]||{k:k,type:l.type,ds:[],n:0}).ds.push(l.date);g[k].n+=l.days});
+ var ls=Object.keys(g).map(function(k){var o=g[k];o.ds.sort();return o}).sort(function(a,b){return a.ds[0]<b.ds[0]?1:-1}).slice(0,15);
+ h+='<div class="card"><h2>سجل الإجازات</h2>'+(ls.length?ls.map(function(o){var f=o.ds[0],e=o.ds[o.ds.length-1];return '<div class="li"><span>'+(f==e?dayName(f):'من '+dayName(f)+'<br>إلى '+dayName(e))+'<br><small style="color:var(--mu)">'+NAMES[o.type]+' • '+o.n+' يوم</small></span><button class="x" data-a="dell" data-i="'+o.k+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد إجازات مسجلة</div>')+'</div>';
+ return h;
+}
+function vLeaveOld(){
+ var n=new Date(),y=n.getFullYear(),q=Math.floor(n.getMonth()/3),t=qTotal(y,q);
+ var h='<h1>الإجازات</h1><div class="sub">رصيد سنة '+y+'</div>'+banner();
+ h+='<div class="card"><h2>الرصيد المتبقي</h2>';
+ Object.keys(QUOTA).forEach(function(k){var u=used(y,k),rem=QUOTA[k]-u;h+='<div class="kv"><span>'+NAMES[k]+'</span><b style="'+(rem<0?'color:var(--wr)':'')+'">المتبقي '+rem+' من '+QUOTA[k]+'</b></div><div class="bar"><i style="width:'+Math.min(100,u/QUOTA[k]*100)+'%"></i></div>'});
+ h+='<div class="kv" style="margin-top:8px"><span>إجمالي '+qLabel(q)+'</span><b style="'+(t>9?'color:var(--wr)':'')+'">'+t+' يوم</b></div>';
+ h+='<div class="kv"><span>إجمالي هذا الشهر</span><b>'+mTotal(ds(n).slice(0,7))+' يوم</b></div></div>';
+ h+='<div class="card"><h2>تسجيل إجازة</h2><label>النوع</label><select id="lt"><option value="annual">سنوية</option><option value="casual">عارضة</option><option value="sick">مرضية</option></select><div class="row"><div><label>تاريخ البداية</label><input type="date" id="ld" value="'+ds(n)+'"></div><div><label>عدد الأيام</label><input type="number" id="ln" value="1" min="0.5" step="0.5"></div></div><button data-a="leave">حفظ الإجازة</button></div>';
+ var ls=S.leaves.slice().sort(function(a,b){return a.date<b.date?1:-1}).slice(0,15);
+ h+='<div class="card"><h2>سجل الإجازات</h2>'+(ls.length?ls.map(function(l){return '<div class="li"><span>'+dayName(l.date)+'<br><small style="color:var(--mu)">'+NAMES[l.type]+' • '+l.days+' يوم</small></span><button class="x" data-a="dell" data-i="'+l.id+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد إجازات مسجلة</div>')+'</div>';
+ return h;
+}
+
+function vWork(){
+ var n=new Date(),d=ds(n),ym=d.slice(0,7),dl=daily();
+ function mo(a){return a.filter(function(x){return x.date.slice(0,7)==ym})}
+ var os=mo(S.ot),ws=mo(S.work.filter(function(w){return w.kind=='weekend'})),hs=mo(S.work.filter(function(w){return w.kind=='holiday'}));
+ var oh=os.reduce(function(a,o){return a+otHours(o)},0),op=os.reduce(function(a,o){return a+otPay(o)},0);
+ var wp=ws.length*dl,hp=hs.length*2*dl;
+ function wl(arr,mult,chk){return arr.length?arr.slice().sort(function(a,b){return a.date<b.date?1:-1}).map(function(w){var g=new Date(w.date+'T12:00:00').getDay();return '<div class="li"><span>'+dayName(w.date)+(chk&&g!=5&&g!=6?'<span class="bd w">ليس جمعة أو سبت</span>':'')+'<br><small style="color:var(--mu)">'+money(mult*dl)+' جنيه + يوم بدل</small></span><button class="x" data-a="delw" data-i="'+w.id+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد أيام هذا الشهر</div>'}
+ var h='<h1>السهر والأعياد</h1><div class="sub">متابعة شهر '+ym+' (الحساب تلقائي)</div>';
+ if(!(+S.salary))h+='<div class="warn">أدخل مرتبك الشهري أولاً ليحسب التطبيق المبالغ.</div>';
+ h+='<div class="card"><h2>المرتب الشهري (إدخال يدوي)</h2><div class="row"><div><input type="number" id="sal" value="'+(S.salary||'')+'" placeholder="أدخل مرتبك الشهري"></div><div><button data-a="sal" style="margin-top:0">حفظ</button></div></div><div class="kv"><span>اليومية (المرتب ÷ 30)</span><b>'+money(dl)+' جنيه</b></div><div class="kv"><span>أجر الساعة (المرتب ÷ 240)</span><b>'+money(dl/8)+' جنيه</b></div></div>';
+ h+='<div class="card"><h2>إجمالي المستحق هذا الشهر</h2><div class="kv"><span>السهر</span><b>'+money(op)+' جنيه</b></div><div class="kv"><span>الجمعة والسبت</span><b>'+money(wp)+' جنيه</b></div><div class="kv"><span>الأعياد الرسمية</span><b>'+money(hp)+' جنيه</b></div><div class="kv"><span>أيام البدل المستحقة</span><b>'+(ws.length+hs.length)+' يوم</b></div><div class="kv"><span>الإجمالي</span><b class="big">'+money(op+wp+hp)+' جنيه</b></div></div>';
+ h+='<div class="card"><h2>🌙 أيام السهر (4 م – 7 م)</h2><div class="sub">حتى 6 م نهاري (+35%) وبعدها ليلي (+70%)</div><label>التاريخ</label><input type="date" id="od" value="'+d+'"><div class="row"><div><label>من</label><input type="time" id="of" value="16:00"></div><div><label>إلى</label><input type="time" id="ot" value="19:00"></div></div><button data-a="ot">حفظ يوم السهر</button><div class="kv" style="margin-top:10px"><span>هذا الشهر</span><b>'+os.length+' يوم • '+oh+' ساعة • '+money(op)+' جنيه</b></div>'+(os.length?os.slice().sort(function(a,b){return a.date<b.date?1:-1}).map(function(o){return '<div class="li"><span>'+dayName(o.date)+'<br><small style="color:var(--mu)">'+o.from+' ← '+o.to+' • '+otHours(o)+' ساعة • '+money(otPay(o))+' جنيه</small></span><button class="x" data-a="delo" data-i="'+o.id+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد أيام سهر هذا الشهر</div>')+'</div>';
+ h+='<div class="card"><h2>📅 العمل يوم الجمعة أو السبت</h2><div class="sub">يوم بدل + أجر يوم</div><label>التاريخ</label><input type="date" id="wd2" value="'+d+'"><button data-a="wkw">حفظ يوم العمل</button><div class="kv" style="margin-top:10px"><span>هذا الشهر</span><b>'+ws.length+' يوم • '+money(wp)+' جنيه</b></div>'+wl(ws,1,true)+'</div>';
+ h+='<div class="card"><h2>🎉 العمل في الأعياد الرسمية</h2><div class="sub">أجر يومين + يوم بدل</div><label>التاريخ</label><input type="date" id="wd3" value="'+d+'"><button data-a="wkh">حفظ يوم العيد</button><div class="kv" style="margin-top:10px"><span>هذا الشهر</span><b>'+hs.length+' يوم • '+money(hp)+' جنيه</b></div>'+wl(hs,2,false)+'</div>';
+ return h;
+}
+function vWorkOld(){
+ var d=ds(new Date()),h='<h1>العمل الإضافي</h1><div class="sub">الإضافي من 4 م إلى 7 م: حتى 6 م نهاري (+35%) وبعدها ليلي (+70%)</div>';
+ if(!(+S.salary))h+='<div class="warn">أدخل مرتبك الشهري في تبويب التقرير ليحسب التطبيق المبالغ.</div>';
+ h+='<div class="card"><h2>ساعات إضافي (بعد الدوام)</h2><label>التاريخ</label><input type="date" id="od" value="'+d+'"><div class="row"><div><label>من</label><input type="time" id="of" value="16:00"></div><div><label>إلى</label><input type="time" id="ot" value="19:00"></div></div><button data-a="ot">حفظ الإضافي</button>';
+ var os=S.ot.slice().sort(function(a,b){return a.date<b.date?1:-1}).slice(0,8);
+ h+=os.map(function(o){return '<div class="li"><span>'+dayName(o.date)+'<br><small style="color:var(--mu)">'+o.from+' ← '+o.to+' • '+otHours(o)+' ساعة • '+money(otPay(o))+' جنيه</small></span><button class="x" data-a="delo" data-i="'+o.id+'">حذف</button></div>'}).join('')+'</div>';
+ h+='<div class="card"><h2>عمل في إجازة رسمية أو الجمعة والسبت</h2><label>التاريخ</label><input type="date" id="wd" value="'+d+'"><label>النوع</label><select id="wk"><option value="holiday">إجازة رسمية / عيد</option><option value="weekend">جمعة أو سبت</option></select><div class="sub" style="margin:8px 0 0">الإجازة الرسمية = أجر يومين + يوم بدل<br>الجمعة/السبت = أجر يوم + يوم بدل</div><button data-a="work">حفظ</button>';
+ var ws=S.work.slice().sort(function(a,b){return a.date<b.date?1:-1}).slice(0,8);
+ h+=ws.map(function(w){var pay=(w.kind=='holiday'?2:1)*daily();return '<div class="li"><span>'+dayName(w.date)+'<br><small style="color:var(--mu)">'+(w.kind=='holiday'?'إجازة رسمية':'جمعة/سبت')+' • '+money(pay)+' جنيه + يوم بدل</small></span><button class="x" data-a="delw" data-i="'+w.id+'">حذف</button></div>'}).join('')+'</div>';
+ return h;
+}
+
+function vRep(){
+ var ym=S._ym||ds(new Date()).slice(0,7),y=+ym.slice(0,4),q=Math.floor((+ym.slice(5,7)-1)/3);
+ var days=Object.keys(S.att).filter(function(k){return k.slice(0,7)==ym}),late=days.filter(function(k){return S.att[k].in&&mins(S.att[k].in)>mins(IN_MAX)}).length;
+ var early=days.filter(function(k){return S.att[k].out&&mins(S.att[k].out)<mins(OUT_MIN)}).length;
+ var ot=S.ot.filter(function(o){return o.date.slice(0,7)==ym}).reduce(function(a,o){return a+otHours(o)},0);
+ var hol=S.work.filter(function(w){return w.date.slice(0,7)==ym&&w.kind=='holiday'}).length,wk=S.work.filter(function(w){return w.date.slice(0,7)==ym&&w.kind=='weekend'}).length;
+ var otm=S.ot.filter(function(o){return o.date.slice(0,7)==ym}).reduce(function(a,o){return a+otPay(o)},0),pay=(hol*2+wk)*daily()+otm,t=qTotal(y,q);
+ var h='<h1>التقرير الشهري</h1><div class="sub">ملخص الشهر والربع</div>'+banner();
+ h+='<div class="card"><h2>المرتب</h2><label>المرتب الشهري (جنيه)</label><input type="number" id="sal" value="'+(S.salary||'')+'" placeholder="مثال: 9000"><div class="kv"><span>اليومية (المرتب ÷ 30)</span><b>'+money(daily())+' جنيه</b></div><button data-a="sal" class="sec">حفظ المرتب</button></div>';
+ h+='<div class="card"><label>اختر الشهر</label><input type="month" id="rm" value="'+ym+'">';
+ h+='<h2 style="margin-top:14px">الحضور</h2><div class="kv"><span>أيام الحضور</span><b>'+days.length+'</b></div><div class="kv"><span>مرات التأخير</span><b>'+late+'</b></div><div class="kv"><span>انصراف قبل الموعد</span><b>'+early+'</b></div>';
+ h+='<h2 style="margin-top:14px">الإجازات</h2>';
+ Object.keys(QUOTA).forEach(function(k){h+='<div class="kv"><span>'+NAMES[k]+'</span><b>'+mTotal(ym,k)+' يوم</b></div>'});
+ h+='<div class="kv"><span>إجمالي الشهر</span><b>'+mTotal(ym)+' يوم</b></div><div class="kv"><span>إجمالي '+qLabel(q)+'</span><b style="'+(t>9?'color:var(--wr)':'')+'">'+t+' يوم</b></div>';
+ h+='<h2 style="margin-top:14px">الإضافي والبدلات</h2><div class="kv"><span>ساعات الإضافي (4–7 م)</span><b>'+ot+' ساعة</b></div><div class="kv"><span>مبلغ الإضافي (حسب القانون)</span><b>'+money(otm)+' جنيه</b></div><div class="kv"><span>أيام عمل في إجازة رسمية</span><b>'+hol+'</b></div><div class="kv"><span>أيام عمل جمعة/سبت</span><b>'+wk+'</b></div><div class="kv"><span>أيام البدل المستحقة</span><b>'+(hol+wk)+' يوم</b></div><div class="kv"><span>إجمالي المبلغ المستحق</span><b class="big">'+money(pay)+' جنيه</b></div></div>';
+ h+=backupCard();h+=syncCard();
+ return h;
+}
+
+function syncCard(){var c=null;try{c=JSON.parse(localStorage.getItem('monzer_sync'))}catch(e){}
+ var h='<div class="card"><h2>🔄 المزامنة بين هواتفك</h2>';
+ if(c)h+='<div class="sub">المزامنة مفعّلة ✅ تعمل تلقائياً عند توفر الإنترنت، والتطبيق يعمل بدونها. بياناتك تُشفَّر قبل رفعها.</div><div class="kv"><span>آخر مزامنة</span><b>'+(c.l?new Date(c.l).toLocaleString('ar-EG'):'لم تتم بعد')+'</b></div><button data-a="synow">مزامنة الآن</button><button data-a="syc" class="sec">عرض رمز الربط للهواتف الأخرى</button><textarea id="sco" rows="3" style="display:none"></textarea><button data-a="syx" class="sec">إيقاف المزامنة</button>';
+ else h+='<div class="sub">الهاتف الأول: أدخل رابط قاعدة بيانات Firebase وكلمة سر من اختيارك.</div><label>رابط قاعدة البيانات</label><input id="fu" placeholder="https://xxxx-default-rtdb.firebaseio.com"><label>كلمة سر المزامنة</label><input id="fp" type="password" placeholder="6 أحرف على الأقل"><button data-a="syn">تفعيل المزامنة</button><div class="sub" style="margin-top:12px">هاتف آخر: الصق رمز الربط من الهاتف الأول.</div><textarea id="fc" rows="2" placeholder="رمز الربط"></textarea><button data-a="syj" class="sec">ربط هذا الهاتف</button>';
+ return h+'<div id="sst" class="sub"></div></div>'}
+function backupCard(){return '<div class="card"><h2>النسخة الاحتياطية</h2><div class="sub">انسخ بياناتك واحفظها في ملاحظات أو أرسلها لنفسك. وللاسترجاع الصق النص هنا.</div><button data-a="bk">نسخ بياناتي</button><label>الصق النسخة هنا للاسترجاع</label><textarea id="bkt" rows="3"></textarea><button data-a="rs" class="sec">استرجاع البيانات</button><div id="bkm" class="sub"></div></div>'}
+var ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs><rect width="512" height="512" rx="120" fill="url(#mg)"/><circle cx="256" cy="262" r="140" fill="none" stroke="#fff" stroke-width="30"/><path d="M256 176v90l62 40" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><circle cx="380" cy="132" r="42" fill="#fbbf24" stroke="#0f766e" stroke-width="14"/></svg>';
+function offStatus(){var e=document.getElementById('offs');if(!e)return;if(!navigator.onLine){e.className='pill off';e.textContent='📴 بدون إنترنت'}else if(window.__offReady){e.className='pill';e.textContent='✅ يعمل بدون إنترنت'}else{e.className='pill';e.textContent=''}}
+window.addEventListener('online',offStatus);window.addEventListener('offline',offStatus);
+var BRAND='<div class="brand">'+ICON+'<b>Monzer</b><span class="pill" id="offs"></span></div>';
+function render(){
+ var v={today:vToday,leave:vLeave,work:vWork,rep:vRep}[tab];
+ document.getElementById('app').innerHTML=BRAND+v();offStatus();
+ document.getElementById('nav').innerHTML=TABS.map(function(t){return '<a data-t="'+t[0]+'" class="'+(t[0]==tab?'on':'')+'"><span>'+t[1]+'</span>'+t[2]+'</a>'}).join('');
+}
+
+document.addEventListener('click',function(e){
+ var t=e.target.closest('[data-t]');if(t){tab=t.dataset.t;render();window.scrollTo(0,0);return}
+ var b=e.target.closest('[data-a]');if(!b)return;
+ var a=b.dataset.a,n=new Date(),d=ds(n),id=Date.now();
+ if(S.del&&(a=='in'||a=='out'))delete S.del['a:'+d];if(S.del&&a=='man')delete S.del['a:'+V('md')];
+ if(a=='in'){S.att[d]=S.att[d]||{};if(!S.att[d].in)S.att[d].in=ts(n)}
+ else if(a=='out'){S.att[d]=S.att[d]||{};S.att[d].out=ts(n)}
+ else if(a=='man'){var md=V('md');if(!md)return;S.att[md]={in:V('mi')||undefined,out:V('mo')||undefined}}
+ else if(a=='delatt'){S.del=S.del||{};S.del['a:'+b.dataset.k]=1;delete S.att[b.dataset.k]}
+ else if(a=='leave'){var ld=V('ld'),le=V('le')||ld,lm=document.getElementById('lm');if(!ld||le<ld){lm.textContent='تأكد أن تاريخ النهاية بعد تاريخ البداية أو يساويه';return}var dd=leaveDays(ld,le,document.getElementById('lw').checked);if(!dd.length){lm.textContent='الفترة كلها جمعة وسبت ولا تُحسب إجازة';return}dd.forEach(function(x,i){S.leaves.push({id:id+i,gid:id,date:x,type:V('lt'),days:1})})}
+ else if(a=='quota'){var nv=function(x){var v=parseFloat(x);return isNaN(v)?0:Math.max(0,v)};S.quota={annual:nv(V('qa')),casual:nv(V('qc')),sick:nv(V('qs'))}}
+ else if(a=='dell'){S.del=S.del||{};S.del['l:'+b.dataset.i]=1;S.leaves=S.leaves.filter(function(x){return (x.gid||x.id)!=b.dataset.i})}
+ else if(a=='ot'){var od=V('od');if(!od||!V('of')||!V('ot'))return;S.ot.push({id:id,date:od,from:V('of'),to:V('ot')})}
+ else if(a=='delo'){S.del=S.del||{};S.del['o:'+b.dataset.i]=1;S.ot=S.ot.filter(function(x){return x.id!=b.dataset.i})}
+ else if(a=='work'){var wd=V('wd');if(!wd)return;S.work.push({id:id,date:wd,kind:V('wk')})}
+ else if(a=='delw'){S.del=S.del||{};S.del['w:'+b.dataset.i]=1;S.work=S.work.filter(function(x){return x.id!=b.dataset.i})}
+ else if(a=='wkw'||a=='wkh'){var wd2=V(a=='wkw'?'wd2':'wd3');if(!wd2)return;S.work.push({id:id,date:wd2,kind:a=='wkw'?'weekend':'holiday'})}
+ else if(a=='sal'){S.salary=parseFloat(V('sal'))||0}
+ else if(a=='syn'||a=='syj'||a=='syc'||a=='synow'||a=='syx'){window.syncAct(a);return}
+ else if(a=='bk'){var j=JSON.stringify(S),m=document.getElementById('bkm'),ta=document.getElementById('bkt');ta.value=j;ta.select();try{navigator.clipboard.writeText(j).then(function(){m.textContent='تم النسخ ✅ الصق النسخة في ملاحظاتك'},function(){m.textContent='اضغط مطولاً على النص أعلاه واختر نسخ'})}catch(x){m.textContent='اضغط مطولاً على النص أعلاه واختر نسخ'}return}
+ else if(a=='rs'){try{var ob=JSON.parse(V('bkt'));if(!ob||typeof ob!='object'||!ob.att)throw 0;S=Object.assign({salary:0,att:{},leaves:[],ot:[],work:[]},ob)}catch(x){document.getElementById('bkm').textContent='النص غير صحيح، تأكد من نسخه كاملاً';return}}
+ save();render();
+});
+document.addEventListener('change',function(e){if(e.target.id=='rm'&&e.target.value){S._ym=e.target.value;render()}});
+render();
+</script>
+<button id="inst" type="button">📲 تثبيت تطبيق Monzer على هاتفك</button>
+<script>
+(function(){
+ var dp=null,b=document.getElementById('inst');
+ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();dp=e;b.style.display='block'});
+ b.addEventListener('click',function(){if(!dp)return;dp.prompt();dp.userChoice.then(function(){dp=null;b.style.display='none'})});
+ window.addEventListener('appinstalled',function(){b.style.display='none'});
+ if('serviceWorker' in navigator&&location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){try{navigator.serviceWorker.register('sw.js').then(function(){return navigator.serviceWorker.ready}).then(function(){window.__offReady=true;offStatus()}).catch(function(){})}catch(e){}});
+ }
+ try{if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}
+})();
+</script>
+<script src="sync.js"></script>
+</body>
+</html>
