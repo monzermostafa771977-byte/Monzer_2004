@@ -1,5 +1,5 @@
-const CACHE='monzer-v6';
-const FILES=['./','index.html','sync.js','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
+const CACHE='monzer-v7';
+const FILES=['./','index.html','sync.js','chat.js','chat-config.js','manifest.webmanifest','icon-192.png','icon-512.png','icon-maskable-512.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES.map(f=>new Request(f,{cache:'reload'})))).then(()=>self.skipWaiting()));
 });

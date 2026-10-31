@@ -49,9 +49,16 @@ nav a span{display:block;font-size:20px}
 nav a.on{color:var(--pr);font-weight:700}
 .empty{color:var(--mu);font-size:14px;padding:6px 0}
 #inst{position:fixed;left:14px;right:14px;bottom:78px;z-index:20;display:none;box-shadow:0 4px 18px rgba(0,0,0,.25)}
-.pill{margin-inline-start:auto;font-size:12px;padding:3px 9px;border-radius:99px;background:var(--okb);color:var(--ok);font-family:system-ui,Arial,sans-serif}
+.pill{font-size:12px;padding:3px 9px;border-radius:99px;background:var(--okb);color:var(--ok);font-family:system-ui,Arial,sans-serif}
 .pill:empty{display:none}
 .pill.off{background:var(--wb);color:var(--wr)}
+.rt{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
+.cbtn{width:auto;margin:0;padding:6px 11px;border-radius:99px;background:var(--card);color:var(--tx);border:1px solid var(--bd);font-size:16px;font-weight:400}
+.cbtn span{font-size:12px;color:var(--wr);font-weight:700}
+.bub{max-width:88%;padding:8px 12px;border-radius:14px;margin:6px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.bub.me{background:var(--pr);color:var(--prt);margin-inline-start:auto}
+.bub.th{background:var(--bd);color:var(--tx)}
+.bub small{display:block;opacity:.7;font-size:11px;margin-top:3px}
 </style>
 </head>
 <body>
@@ -208,10 +215,10 @@ function backupCard(){return '<div class="card"><h2>النسخة الاحتيا�
 var ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs><rect width="512" height="512" rx="120" fill="url(#mg)"/><circle cx="256" cy="262" r="140" fill="none" stroke="#fff" stroke-width="30"/><path d="M256 176v90l62 40" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><circle cx="380" cy="132" r="42" fill="#fbbf24" stroke="#0f766e" stroke-width="14"/></svg>';
 function offStatus(){var e=document.getElementById('offs');if(!e)return;if(!navigator.onLine){e.className='pill off';e.textContent='📴 بدون إنترنت'}else if(window.__offReady){e.className='pill';e.textContent='✅ يعمل بدون إنترنت'}else{e.className='pill';e.textContent=''}}
 window.addEventListener('online',offStatus);window.addEventListener('offline',offStatus);
-var BRAND='<div class="brand">'+ICON+'<b>Monzer</b><span class="pill" id="offs"></span></div>';
+var BRAND='<div class="brand">'+ICON+'<b>Monzer</b><span class="rt"><span class="pill" id="offs"></span><button class="cbtn" data-t="chat" type="button">💬<span id="cbd"></span></button></span></div>';
 function render(){
- var v={today:vToday,leave:vLeave,work:vWork,rep:vRep,shift:vShift}[tab];
- document.getElementById('app').innerHTML=BRAND+v();offStatus();
+ var v={today:vToday,leave:vLeave,work:vWork,rep:vRep,shift:vShift,chat:function(){return window.vChat?window.vChat():''}}[tab];
+ document.getElementById('app').innerHTML=BRAND+v();offStatus();if(window.chatBadge)chatBadge();
  document.getElementById('nav').innerHTML=TABS.map(function(t){return '<a data-t="'+t[0]+'" class="'+(t[0]==tab?'on':'')+'"><span>'+t[1]+'</span>'+t[2]+'</a>'}).join('');
 }
 
@@ -258,5 +265,7 @@ render();
 })();
 </script>
 <script src="sync.js"></script>
+<script src="chat-config.js"></script>
+<script src="chat.js"></script>
 </body>
 </html>
