@@ -1,6 +1,7 @@
 /**
- * نظام التنبيهات الصوتية المتكامل للحضور والانصراف
- * يدعم: الوضع الصامت، تغيير النغمات، الحفظ المحلي، والمزامنة السحابية مع Firebase
+ * نظام التنبيهات الصوتية المتكامل للحضور والانصراف (الإصدار الخامس - V5)
+ * يدعم: فتح التطبيق فوراً على الواجهة الرئيسية، التنبيه كـ "تذكير اختياري"،
+ * الأصوات فائقة النقاء والعالية، والمزامنة السحابية مع Firebase.
  */
 
 class AttendanceSoundManager {
@@ -16,7 +17,7 @@ class AttendanceSoundManager {
         this.syncWithFirebase();
     }
 
-    // تهيئة محرك الصوت (Web Audio API) بدقة عالية ووضوح تام
+    // تهيئة محرك الصوت (Web Audio API)
     initAudioContext() {
         if (!this.audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -30,7 +31,6 @@ class AttendanceSoundManager {
     // تشغيل التنبيه بنقاء وارتفاع صوت عاليين جداً
     play(type = 'in') {
         if (this.isMuted) return;
-
         this.initAudioContext();
 
         try {
@@ -67,7 +67,7 @@ class AttendanceSoundManager {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(type === 'in' ? 950 : 600, this.audioCtx.currentTime);
 
-        gain.gain.setValueAtTime(0.25, this.audioCtx.currentTime); // رفع مستوى الصوت ليكون واضحاً
+        gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.35);
 
         osc.connect(gain);
@@ -88,7 +88,7 @@ class AttendanceSoundManager {
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(f, now + (index * 0.06));
 
-            gain.gain.setValueAtTime(0.2, now + (index * 0.06));
+            gain.gain.setValueAtTime(0.25, now + (index * 0.06));
             gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.2);
 
             osc.connect(gain);
@@ -108,7 +108,7 @@ class AttendanceSoundManager {
         osc.frequency.setValueAtTime(523.25, now);
         osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
 
-        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
         osc.connect(gain);
@@ -128,7 +128,7 @@ class AttendanceSoundManager {
             osc.frequency.setValueAtTime(400, now + (i * 0.15));
             osc.frequency.setValueAtTime(800, now + (i * 0.15) + 0.07);
 
-            gain.gain.setValueAtTime(0.2, now + (i * 0.15));
+            gain.gain.setValueAtTime(0.25, now + (i * 0.15));
             gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.15) + 0.12);
 
             osc.connect(gain);
@@ -147,7 +147,7 @@ class AttendanceSoundManager {
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1200, now);
         
-        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.setValueAtTime(0.35, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
         osc.connect(gain);
@@ -166,7 +166,7 @@ class AttendanceSoundManager {
         osc.frequency.setValueAtTime(type === 'in' ? 700 : 500, now);
         osc.frequency.setValueAtTime(type === 'in' ? 900 : 700, now + 0.1);
 
-        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
 
         osc.connect(gain);
@@ -189,7 +189,6 @@ class AttendanceSoundManager {
         this.saveToFirebase();
     }
 
-    // مزامنة غير متزامنة في الخلفية لضمان عدم بطء فتح التطبيق
     async syncWithFirebase() {
         if (!this.databaseUrl) return;
         try {
@@ -203,12 +202,12 @@ class AttendanceSoundManager {
                     }
                     if (data.currentTone) {
                         this.currentTone = data.currentTone;
-                        localStorage.setItem('attendance_sound_tone', this.currentTone);
+                        localStorage.setItem('attendance_sound_tone', data.currentTone);
                     }
                 }
             }
         } catch (e) {
-            console.log("العمل دون اتصال بالإنترنت، جاري استخدام الذاكرة المحلية.");
+            console.log("العمل دون اتصال بالإنترنت، استخدام الذاكرة المحلية.");
         }
     }
 
@@ -221,7 +220,7 @@ class AttendanceSoundManager {
                 body: JSON.stringify({ isMuted: this.isMuted, currentTone: this.currentTone })
             });
         } catch (e) {
-            // تجاهل صامت لتفادي أي تأثير على الأداء
+            // مزامنة صامتة في الخلفية
         }
     }
 }
