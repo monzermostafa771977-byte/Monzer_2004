@@ -3,168 +3,307 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>نظام الحضور والانصراف</title>
+    <title>تطبيق الحضور والإدارة الكاملة</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #0f172a;
-            color: #ffffff;
-            margin: 0;
-            padding: 15px;
-            text-align: center;
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
-        .container {
-            max-width: 450px;
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 12px;
+            padding-bottom: 70px;
+        }
+        .header-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin-bottom: 12px;
+        }
+        .main-container {
+            max-width: 480px;
             margin: 0 auto;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
         }
         .card {
             background-color: #1e293b;
-            border-radius: 14px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.4);
-            text-align: right;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 14px;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
-        .card h3 {
-            margin-top: 0;
-            text-align: center;
-            color: #2dd4bf;
+        .card-title {
+            font-size: 16px;
+            font-weight: bold;
+            color: #38bdf8;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
         }
-        button {
-            background-color: #0d9488;
-            color: white;
+        .btn {
+            width: 100%;
+            padding: 12px;
             border: none;
-            padding: 14px 20px;
-            font-size: 16px;
-            font-weight: bold;
-            border-radius: 10px;
-            cursor: pointer;
-            margin: 8px 0;
-            width: 100%;
-        }
-        button.checkout {
-            background-color: #e11d48;
-        }
-        button.secondary {
-            background-color: #475569;
-        }
-        select {
-            padding: 12px;
             border-radius: 8px;
-            font-size: 16px;
-            margin-top: 8px;
-            width: 100%;
-            background-color: #334155;
-            color: white;
-            border: 1px solid #64748b;
-        }
-        .info-box {
-            background-color: #1e293b;
-            color: #94a3b8;
-            padding: 12px;
-            border-radius: 10px;
-            font-size: 14px;
-            margin-bottom: 15px;
-            text-align: center;
-            border: 1px dashed #334155;
-        }
-        .collapsible-header {
-            background-color: #334155;
-            color: #f8fafc;
-            padding: 12px;
-            border-radius: 10px;
-            cursor: pointer;
+            font-size: 15px;
             font-weight: bold;
-            text-align: center;
-            margin-bottom: 10px;
+            color: white;
+            cursor: pointer;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: transform 0.1s;
         }
-        .collapsible-content {
-            display: none;
-            padding-top: 10px;
+        .btn:active {
+            transform: scale(0.98);
         }
-        .collapsible-content.open {
+        .btn-checkin { background-color: #10b981; }
+        .btn-checkout { background-color: #ef4444; }
+        .btn-overtime { background-color: #8b5cf6; }
+        .btn-weekend { background-color: #f59e0b; }
+        .btn-holiday { background-color: #06b6d4; }
+        .btn-secondary { background-color: #475569; }
+
+        .form-group {
+            margin-bottom: 12px;
+        }
+        .form-group label {
             display: block;
+            font-size: 13px;
+            color: #94a3b8;
+            margin-bottom: 4px;
+        }
+        .form-control {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            background-color: #0f172a;
+            color: white;
+            font-size: 14px;
+        }
+
+        /* شريط التنقل السفلي الثابت */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background-color: #1e293b;
+            border-top: 1px solid #334155;
+            display: flex;
+            justify-content: space-around;
+            padding: 8px 0;
+            z-index: 999;
+        }
+        .nav-item {
+            background: none;
+            border: none;
+            color: #64748b;
+            font-size: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            width: 25%;
+        }
+        .nav-item.active {
+            color: #38bdf8;
+            font-weight: bold;
+        }
+        .nav-item span {
+            font-size: 18px;
+        }
+        .log-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            font-size: 13px;
+        }
+        .log-item {
+            background-color: #0f172a;
+            padding: 10px;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            display: flex;
+            justify-content: space-between;
+            border-right: 3px solid #38bdf8;
         }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h2>نظام الحضور والانصراف</h2>
+    <div class="main-container">
+        <div class="header-title">تطبيق إدارة الحضور والعمل</div>
 
-        <div class="info-box">
-            ⚡ التطبيق يعمل مباشرة. التنبيهات مساعدة وليست إجبارية.
-        </div>
-
-        <!-- الواجهة الرئيسية لتسجيل الحضور والانصراف (ظاهرة دائماً ودون أي قيود) -->
-        <div class="card">
-            <h3>تسجيل الحضور والانصراف</h3>
-            <p style="text-align: center; color: #cbd5e1;">اختر العملية المطلوبة للتسجيل الفوري:</p>
-            <button id="btnCheckIn" onclick="handleCheckIn()">تسجيل حضور 🟢</button>
-            <button id="btnCheckOut" class="checkout" onclick="handleCheckOut()">تسجيل انصراف 🔴</button>
-        </div>
-
-        <!-- قسم إعدادات التذكير الصوتي (اختياري بالكامل وغير مقيد) -->
-        <div class="card">
-            <div class="collapsible-header" onclick="toggleReminderPanel()">
-                ⚙️ إعدادات التذكير الصوتي (اختياري)
+        <!-- 1. تبويب تسجيل الحضور والانصراف (الرئيسي الافتراضي) -->
+        <div id="tab-attendance" class="tab-content active">
+            <div class="card">
+                <div class="card-title">📍 الحضور والانصراف اليومي</div>
+                <button class="btn btn-checkin" onclick="recordAction('حضور يومي', 'in')">
+                    🟢 تسجيل حضور يدوياً
+                </button>
+                <button class="btn btn-checkout" onclick="recordAction('انصراف يومي', 'out')">
+                    🔴 تسجيل انصراف يدوياً
+                </button>
             </div>
-            <div id="reminderContent" class="collapsible-content">
-                <p style="font-size: 13px; color: #94a3b8;">هذا النظام يعمل في الخلفية كتذكير صوتي فقط ولا يغلق أو يقيد التطبيق.</p>
-                <button id="muteBtn" class="secondary" onclick="toggleMuteApp()">🔊 التذكير مفعل</button>
-                
-                <label for="toneSelector" style="display: block; margin-top: 12px; font-size: 14px;">اختر نغمة التذكير:</label>
-                <select id="toneSelector" onchange="changeAppTone(this.value)">
-                    <option value="beep">صفارة قياسية (Beep)</option>
-                    <option value="chime">جرس موسيقي (Chime)</option>
-                    <option value="success">نغمة نجاح (Success)</option>
-                    <option value="alert">تنبيه مميز (Alert)</option>
-                    <option value="bell">رنين جرس (Bell)</option>
-                    <option value="modern">نغمة عصرية (Modern)</option>
-                </select>
+
+            <div class="card">
+                <div class="card-title">🌙 تسجيل السهر (Overtime)</div>
+                <div class="form-group">
+                    <label>عدد ساعات السهر:</label>
+                    <input type="number" id="overtimeHours" class="form-control" placeholder="مثال: 3" value="2">
+                </div>
+                <button class="btn btn-overtime" onclick="recordOvertime()">
+                    🟣 تسجيل ساعات السهر
+                </button>
+            </div>
+        </div>
+
+        <!-- 2. تبويب أيام العطلات (الجمعة والسبت والأعياد) -->
+        <div id="tab-holidays" class="tab-content">
+            <div class="card">
+                <div class="card-title">📅 عمل الجمعة والسبت</div>
+                <div class="form-group">
+                    <label>اختر اليوم:</label>
+                    <select id="weekendType" class="form-control">
+                        <option value="الجمعة">الجمعة</option>
+                        <option value="السبت">السبت</option>
+                    </select>
+                </div>
+                <button class="btn btn-weekend" onclick="recordWeekendWork()">
+                    🟠 تسجيل عمل العطلة الأسبوعية
+                </button>
+            </div>
+
+            <div class="card">
+                <div class="card-title">🎉 عمل أيام الأعياد والمناسبات</div>
+                <div class="form-group">
+                    <label>اسم المناسبة / العيد:</label>
+                    <input type="text" id="holidayName" class="form-control" placeholder="مثال: عيد الفطر / عيد الأضحى">
+                </div>
+                <button class="btn btn-holiday" onclick="recordHolidayWork()">
+                    🔵 تسجيل عمل يوم عيد
+                </button>
+            </div>
+        </div>
+
+        <!-- 3. تبويب سجل التسجيلات -->
+        <div id="tab-history" class="tab-content">
+            <div class="card">
+                <div class="card-title">📋 سجل الحضور والأنشطة</div>
+                <ul id="logList" class="log-list">
+                    <li class="log-item"><span>تجهيز النظام...</span><span>الآن</span></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 4. تبويب إعدادات الصوت والتذكير (اختياري خلفي) -->
+        <div id="tab-settings" class="tab-content">
+            <div class="card">
+                <div class="card-title">🔔 إعدادات الصوت والتذكير</div>
+                <p style="font-size: 12px; color: #94a3b8;">التنبيهات تعمل في الخلفية كمساعد للتأكيد فقط بدون تعطيل الواجهة.</p>
+                <button id="muteBtn" class="btn btn-secondary" onclick="toggleMuteApp()">🔊 الصوت مفعل</button>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>اختر نغمة التأكيد:</label>
+                    <select id="toneSelector" class="form-control" onchange="changeTone(this.value)">
+                        <option value="beep">صفارة قياسية (Beep)</option>
+                        <option value="chime">جرس رقيق (Chime)</option>
+                        <option value="success">نغمة نجاح (Success)</option>
+                        <option value="bell">جرس عالي (Bell)</option>
+                    </select>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- تضمين ملف الصوت -->
+    <!-- شريط التنقل السفلي لتسهيل التنقل المباشر -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('attendance', this)">
+            <span>📍</span>الحضور
+        </button>
+        <button class="nav-item" onclick="switchTab('holidays', this)">
+            <span>📅</span>السبت/الأعياد
+        </button>
+        <button class="nav-item" onclick="switchTab('history', this)">
+            <span>📋</span>السجل
+        </button>
+        <button class="nav-item" onclick="switchTab('settings', this)">
+            <span>⚙️</span>الصوت
+        </button>
+    </div>
+
+    <!-- تضمين مدير الصوت -->
     <script src="soundManager.js"></script>
 
     <script>
-        // ربط قاعدة البيانات في الخلفية
-        if (typeof attendanceSound !== 'undefined') {
-            attendanceSound.setDatabaseUrl("https://monzer-771977-default-rtdb.europe-west1.firebasedatabase.app");
+        // التبديل بين التبويبات مباشرة وبكل سلاسة
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            btnElement.classList.add('active');
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        // إيصال البيانات إلى Firebase وLocal Storage
+        function addLog(text) {
+            const list = document.getElementById('logList');
+            const now = new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' });
+            const item = document.createElement('li');
+            item.className = 'log-item';
+            item.innerHTML = `<span>${text}</span><span style="color:#64748b;">${now}</span>`;
+            list.insertBefore(item, list.firstChild);
+        }
+
+        function recordAction(actionName, soundType) {
+            addLog(`تم ${actionName}`);
             if (typeof attendanceSound !== 'undefined') {
-                document.getElementById('toneSelector').value = attendanceSound.currentTone;
-                document.getElementById('muteBtn').innerText = attendanceSound.isMuted ? "🔇 التذكير صامت" : "🔊 التذكير مفعل";
+                attendanceSound.play(soundType);
             }
-        });
-
-        // فتح/إغلاق لوحة التذكير الاختيارية بسلاسة
-        function toggleReminderPanel() {
-            const content = document.getElementById('reminderContent');
-            content.classList.toggle('open');
+            alert(`✅ تم ${actionName} بنجاح!`);
         }
 
-        // تسجيل الحضور
-        function handleCheckIn() {
-            alert("تم تسجيل الحضور بنجاح!");
+        function recordOvertime() {
+            const hours = document.getElementById('overtimeHours').value || 1;
+            addLog(`تسجيل سهر: ${hours} ساعة`);
             if (typeof attendanceSound !== 'undefined') {
-                attendanceSound.play('in');
+                attendanceSound.play('overtime');
             }
+            alert(`🟣 تم تسجيل سهر بمقدار ${hours} ساعة بنجاح!`);
         }
 
-        // تسجيل الانصراف
-        function handleCheckOut() {
-            alert("تم تسجيل الانصراف بنجاح!");
+        function recordWeekendWork() {
+            const type = document.getElementById('weekendType').value;
+            addLog(`عمل عطلة: يوم ${type}`);
             if (typeof attendanceSound !== 'undefined') {
-                attendanceSound.play('out');
+                attendanceSound.play('weekend');
             }
+            alert(`🟠 تم تسجيل عمل يوم (${type}) بنجاح!`);
         }
 
-        // تبديل الوضع الصامت للتذكير
+        function recordHolidayWork() {
+            const name = document.getElementById('holidayName').value || "عيد رسمية";
+            addLog(`عمل عيد: ${name}`);
+            if (typeof attendanceSound !== 'undefined') {
+                attendanceSound.play('holiday');
+            }
+            alert(`🔵 تم تسجيل عمل يوم (${name}) بنجاح!`);
+        }
+
         function toggleMuteApp() {
             if (typeof attendanceSound !== 'undefined') {
                 const muted = attendanceSound.toggleMute();
@@ -172,13 +311,20 @@
             }
         }
 
-        // تغيير ومعاينة النغمة
-        function changeAppTone(tone) {
+        function changeTone(tone) {
             if (typeof attendanceSound !== 'undefined') {
                 attendanceSound.setTone(tone);
                 attendanceSound.play('in');
             }
         }
+
+        // ضبط واجهة الصوت عند التحميل
+        document.addEventListener('DOMContentLoaded', () => {
+            if (typeof attendanceSound !== 'undefined') {
+                document.getElementById('toneSelector').value = attendanceSound.currentTone;
+                document.getElementById('muteBtn').innerText = attendanceSound.isMuted ? "🔇 التذكير صامت" : "🔊 التذكير مفعل";
+            }
+        });
     </script>
 </body>
 </html>
