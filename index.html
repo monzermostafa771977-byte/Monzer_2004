@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق الحضور والانصراف - الصفحة الرئيسية</title>
+    <title>نظام الحضور والانصراف</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -17,18 +17,18 @@
             max-width: 450px;
             margin: 0 auto;
         }
-        .screen {
-            display: none;
-        }
-        .screen.active {
-            display: block;
-        }
         .card {
             background-color: #1e293b;
             border-radius: 14px;
             padding: 20px;
             margin-bottom: 15px;
             box-shadow: 0 4px 10px rgba(0,0,0,0.4);
+            text-align: right;
+        }
+        .card h3 {
+            margin-top: 0;
+            text-align: center;
+            color: #2dd4bf;
         }
         button {
             background-color: #0d9488;
@@ -52,39 +52,38 @@
             padding: 12px;
             border-radius: 8px;
             font-size: 16px;
-            margin-top: 10px;
+            margin-top: 8px;
             width: 100%;
             background-color: #334155;
             color: white;
             border: 1px solid #64748b;
         }
-        .nav-bar {
-            display: flex;
-            justify-content: space-around;
+        .info-box {
             background-color: #1e293b;
-            padding: 10px;
-            border-radius: 12px;
-            margin-top: 20px;
-        }
-        .nav-btn {
-            background: none;
-            border: none;
             color: #94a3b8;
+            padding: 12px;
+            border-radius: 10px;
             font-size: 14px;
-            cursor: pointer;
-            width: auto;
-        }
-        .nav-btn.active {
-            color: #2dd4bf;
-            font-weight: bold;
-        }
-        .reminder-banner {
-            background-color: #334155;
-            color: #5eead4;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 13px;
             margin-bottom: 15px;
+            text-align: center;
+            border: 1px dashed #334155;
+        }
+        .collapsible-header {
+            background-color: #334155;
+            color: #f8fafc;
+            padding: 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        .collapsible-content {
+            display: none;
+            padding-top: 10px;
+        }
+        .collapsible-content.open {
+            display: block;
         }
     </style>
 </head>
@@ -93,26 +92,28 @@
     <div class="container">
         <h2>نظام الحضور والانصراف</h2>
 
-        <!-- الشاشة الرئيسية (تفتح تلقائياً فوراً وبدون فرض التنبيهات) -->
-        <div id="mainScreen" class="screen active">
-            <div class="reminder-banner">
-                🔔 نظام التذكير الصوتي يعمل في الخلفية تلقائياً
-            </div>
-            <div class="card">
-                <h3>تسجيل الحضور والانصراف</h3>
-                <p>مرحباً بك، يمكنك بدء استخدام التطبيق والتسجيل فوراً</p>
-                <button id="btnCheckIn" onclick="handleCheckIn()">تسجيل حضور 🟢</button>
-                <button id="btnCheckOut" class="checkout" onclick="handleCheckOut()">تسجيل انصراف 🔴</button>
-            </div>
+        <div class="info-box">
+            ⚡ التطبيق يعمل مباشرة. التنبيهات مساعدة وليست إجبارية.
         </div>
 
-        <!-- شاشة التنبيهات والتذكير الاختيارية (تبويب مستقل لا يعطل الفتح) -->
-        <div id="settingsScreen" class="screen">
-            <div class="card">
-                <h3>إعدادات التذكير الصوتي والنغمات</h3>
-                <button id="muteBtn" class="secondary" onclick="toggleMuteApp()">🔊 الصوت مفعل</button>
-                <br><br>
-                <label for="toneSelector">اختر نغمة التذكير عالية النقاء:</label>
+        <!-- الواجهة الرئيسية لتسجيل الحضور والانصراف (ظاهرة دائماً ودون أي قيود) -->
+        <div class="card">
+            <h3>تسجيل الحضور والانصراف</h3>
+            <p style="text-align: center; color: #cbd5e1;">اختر العملية المطلوبة للتسجيل الفوري:</p>
+            <button id="btnCheckIn" onclick="handleCheckIn()">تسجيل حضور 🟢</button>
+            <button id="btnCheckOut" class="checkout" onclick="handleCheckOut()">تسجيل انصراف 🔴</button>
+        </div>
+
+        <!-- قسم إعدادات التذكير الصوتي (اختياري بالكامل وغير مقيد) -->
+        <div class="card">
+            <div class="collapsible-header" onclick="toggleReminderPanel()">
+                ⚙️ إعدادات التذكير الصوتي (اختياري)
+            </div>
+            <div id="reminderContent" class="collapsible-content">
+                <p style="font-size: 13px; color: #94a3b8;">هذا النظام يعمل في الخلفية كتذكير صوتي فقط ولا يغلق أو يقيد التطبيق.</p>
+                <button id="muteBtn" class="secondary" onclick="toggleMuteApp()">🔊 التذكير مفعل</button>
+                
+                <label for="toneSelector" style="display: block; margin-top: 12px; font-size: 14px;">اختر نغمة التذكير:</label>
                 <select id="toneSelector" onchange="changeAppTone(this.value)">
                     <option value="beep">صفارة قياسية (Beep)</option>
                     <option value="chime">جرس موسيقي (Chime)</option>
@@ -123,50 +124,28 @@
                 </select>
             </div>
         </div>
-
-        <!-- شريط التنقل لتصفح التبويبات بحرية -->
-        <div class="nav-bar">
-            <button class="nav-btn active" id="navMain" onclick="switchScreen('main')">🏠 الواجهة الرئيسية</button>
-            <button class="nav-btn" id="navSettings" onclick="switchScreen('settings')">⚙️ إعدادات التذكير</button>
-        </div>
     </div>
 
-    <!-- تضمين مكتبة الصوت -->
+    <!-- تضمين ملف الصوت -->
     <script src="soundManager.js"></script>
 
     <script>
-        // ربط قاعدة البيانات غير المتزامن
+        // ربط قاعدة البيانات في الخلفية
         if (typeof attendanceSound !== 'undefined') {
             attendanceSound.setDatabaseUrl("https://monzer-771977-default-rtdb.europe-west1.firebasedatabase.app");
         }
 
-        // إقلاع التطبيق المباشر على الشاشة الرئيسية
         document.addEventListener('DOMContentLoaded', () => {
-            switchScreen('main'); // تفعيل الواجهة الرئيسية فوراً
             if (typeof attendanceSound !== 'undefined') {
                 document.getElementById('toneSelector').value = attendanceSound.currentTone;
                 document.getElementById('muteBtn').innerText = attendanceSound.isMuted ? "🔇 التذكير صامت" : "🔊 التذكير مفعل";
             }
         });
 
-        // دالة التنقل بين الشاشات
-        function switchScreen(screenName) {
-            const mainScreen = document.getElementById('mainScreen');
-            const settingsScreen = document.getElementById('settingsScreen');
-            const navMain = document.getElementById('navMain');
-            const navSettings = document.getElementById('navSettings');
-
-            if (screenName === 'main') {
-                mainScreen.classList.add('active');
-                settingsScreen.classList.remove('active');
-                navMain.classList.add('active');
-                navSettings.classList.remove('active');
-            } else {
-                settingsScreen.classList.add('active');
-                mainScreen.classList.remove('active');
-                navSettings.classList.add('active');
-                navMain.classList.remove('active');
-            }
+        // فتح/إغلاق لوحة التذكير الاختيارية بسلاسة
+        function toggleReminderPanel() {
+            const content = document.getElementById('reminderContent');
+            content.classList.toggle('open');
         }
 
         // تسجيل الحضور
@@ -185,7 +164,7 @@
             }
         }
 
-        // تبديل الوضع الصامت
+        // تبديل الوضع الصامت للتذكير
         function toggleMuteApp() {
             if (typeof attendanceSound !== 'undefined') {
                 const muted = attendanceSound.toggleMute();
@@ -193,7 +172,7 @@
             }
         }
 
-        // تغيير وتجربة النغمة
+        // تغيير ومعاينة النغمة
         function changeAppTone(tone) {
             if (typeof attendanceSound !== 'undefined') {
                 attendanceSound.setTone(tone);

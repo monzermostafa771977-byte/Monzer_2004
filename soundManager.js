@@ -1,7 +1,6 @@
 /**
- * نظام التنبيهات الصوتية المتكامل للحضور والانصراف (الإصدار الخامس - V5)
- * يدعم: فتح التطبيق فوراً على الواجهة الرئيسية، التنبيه كـ "تذكير اختياري"،
- * الأصوات فائقة النقاء والعالية، والمزامنة السحابية مع Firebase.
+ * نظام التنبيهات والصوت المطور للحضور والانصراف (الإصدار النهائي V5)
+ * نظام تذكير خلفي اختياري غير مُقيد، مع أصوات عالية النقاوة ومزامنة Firebase.
  */
 
 class AttendanceSoundManager {
@@ -17,7 +16,6 @@ class AttendanceSoundManager {
         this.syncWithFirebase();
     }
 
-    // تهيئة محرك الصوت (Web Audio API)
     initAudioContext() {
         if (!this.audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -28,7 +26,6 @@ class AttendanceSoundManager {
         }
     }
 
-    // تشغيل التنبيه بنقاء وارتفاع صوت عاليين جداً
     play(type = 'in') {
         if (this.isMuted) return;
         this.initAudioContext();
@@ -63,16 +60,12 @@ class AttendanceSoundManager {
     playDefaultBeep(type) {
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
-
         osc.type = 'sine';
         osc.frequency.setValueAtTime(type === 'in' ? 950 : 600, this.audioCtx.currentTime);
-
         gain.gain.setValueAtTime(0.3, this.audioCtx.currentTime);
         gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.35);
-
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
-
         osc.start();
         osc.stop(this.audioCtx.currentTime + 0.35);
     }
@@ -80,20 +73,15 @@ class AttendanceSoundManager {
     playChimeTone(type) {
         const now = this.audioCtx.currentTime;
         const freqs = type === 'in' ? [523.25, 659.25, 783.99, 1046.50] : [1046.50, 783.99, 659.25, 523.25];
-        
         freqs.forEach((f, index) => {
             const osc = this.audioCtx.createOscillator();
             const gain = this.audioCtx.createGain();
-
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(f, now + (index * 0.06));
-
             gain.gain.setValueAtTime(0.25, now + (index * 0.06));
             gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.2);
-
             osc.connect(gain);
             gain.connect(this.audioCtx.destination);
-
             osc.start(now + (index * 0.06));
             osc.stop(now + (index * 0.06) + 0.2);
         });
@@ -103,17 +91,13 @@ class AttendanceSoundManager {
         const now = this.audioCtx.currentTime;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
-
         osc.type = 'sine';
         osc.frequency.setValueAtTime(523.25, now);
         osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
-
         gain.gain.setValueAtTime(0.3, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
-
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
-
         osc.start(now);
         osc.stop(now + 0.4);
     }
@@ -123,17 +107,13 @@ class AttendanceSoundManager {
         for (let i = 0; i < 2; i++) {
             const osc = this.audioCtx.createOscillator();
             const gain = this.audioCtx.createGain();
-
             osc.type = 'sawtooth';
             osc.frequency.setValueAtTime(400, now + (i * 0.15));
             osc.frequency.setValueAtTime(800, now + (i * 0.15) + 0.07);
-
             gain.gain.setValueAtTime(0.25, now + (i * 0.15));
             gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.15) + 0.12);
-
             osc.connect(gain);
             gain.connect(this.audioCtx.destination);
-
             osc.start(now + (i * 0.15));
             osc.stop(now + (i * 0.15) + 0.12);
         }
@@ -143,16 +123,12 @@ class AttendanceSoundManager {
         const now = this.audioCtx.currentTime;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
-
         osc.type = 'sine';
         osc.frequency.setValueAtTime(1200, now);
-        
         gain.gain.setValueAtTime(0.35, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
-
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
-
         osc.start(now);
         osc.stop(now + 0.6);
     }
@@ -161,17 +137,13 @@ class AttendanceSoundManager {
         const now = this.audioCtx.currentTime;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
-
         osc.type = 'square';
         osc.frequency.setValueAtTime(type === 'in' ? 700 : 500, now);
         osc.frequency.setValueAtTime(type === 'in' ? 900 : 700, now + 0.1);
-
         gain.gain.setValueAtTime(0.2, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
-
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
-
         osc.start(now);
         osc.stop(now + 0.25);
     }
@@ -202,13 +174,11 @@ class AttendanceSoundManager {
                     }
                     if (data.currentTone) {
                         this.currentTone = data.currentTone;
-                        localStorage.setItem('attendance_sound_tone', data.currentTone);
+                        localStorage.setItem('attendance_sound_tone', this.currentTone);
                     }
                 }
             }
-        } catch (e) {
-            console.log("العمل دون اتصال بالإنترنت، استخدام الذاكرة المحلية.");
-        }
+        } catch (e) {}
     }
 
     async saveToFirebase() {
@@ -219,9 +189,7 @@ class AttendanceSoundManager {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ isMuted: this.isMuted, currentTone: this.currentTone })
             });
-        } catch (e) {
-            // مزامنة صامتة في الخلفية
-        }
+        } catch (e) {}
     }
 }
 
