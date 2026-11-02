@@ -1,16 +1,22 @@
 /**
  * نظام التنبيهات الصوتية المتكامل للحضور والانصراف
- * يدعم: الوضع الصامت، تغيير النغمات، والحفظ التلقائي في LocalStorage
+ * يدعم: الوضع الصامت، تغيير النغمات، الحفظ المحلي، والمزامنة السحابية مع Firebase
  */
 
 class AttendanceSoundManager {
     constructor() {
         this.isMuted = localStorage.getItem('attendance_sound_muted') === 'true';
         this.currentTone = localStorage.getItem('attendance_sound_tone') || 'beep';
+        this.databaseUrl = null;
         this.audioCtx = null;
     }
 
-    // تهيئة محرك الصوت (Web Audio API)
+    setDatabaseUrl(url) {
+        this.databaseUrl = url;
+        this.syncWithFirebase();
+    }
+
+    // تهيئة محرك الصوت (Web Audio API) بدقة عالية ووضوح تام
     initAudioContext() {
         if (!this.audioCtx) {
             const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -21,7 +27,7 @@ class AttendanceSoundManager {
         }
     }
 
-    // تشغيل التنبيه (نوع الحضور: 'in' أو الانصراف: 'out')
+    // تشغيل التنبيه بنقاء وارتفاع صوت عاليين جداً
     play(type = 'in') {
         if (this.isMuted) return;
 
@@ -38,6 +44,12 @@ class AttendanceSoundManager {
                 case 'alert':
                     this.playAlertTone();
                     break;
+                case 'bell':
+                    this.playBellTone();
+                    break;
+                case 'modern':
+                    this.playModernTone(type);
+                    break;
                 case 'beep':
                 default:
                     this.playDefaultBeep(type);
@@ -48,78 +60,113 @@ class AttendanceSoundManager {
         }
     }
 
-    // النغمة القياسية
     playDefaultBeep(type) {
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(type === 'in' ? 880 : 587.33, this.audioCtx.currentTime);
+        osc.frequency.setValueAtTime(type === 'in' ? 950 : 600, this.audioCtx.currentTime);
 
-        gain.gain.setValueAtTime(0.1, this.audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.3);
+        gain.gain.setValueAtTime(0.25, this.audioCtx.currentTime); // رفع مستوى الصوت ليكون واضحاً
+        gain.gain.exponentialRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.35);
 
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
 
         osc.start();
-        osc.stop(this.audioCtx.currentTime + 0.3);
+        osc.stop(this.audioCtx.currentTime + 0.35);
     }
 
-    // نغمة جرس رقيقة
     playChimeTone(type) {
         const now = this.audioCtx.currentTime;
-        const freqs = type === 'in' ? [523.25, 659.25, 783.99] : [783.99, 659.25, 523.25];
+        const freqs = type === 'in' ? [523.25, 659.25, 783.99, 1046.50] : [1046.50, 783.99, 659.25, 523.25];
         
         freqs.forEach((f, index) => {
             const osc = this.audioCtx.createOscillator();
             const gain = this.audioCtx.createGain();
 
             osc.type = 'triangle';
-            osc.frequency.setValueAtTime(f, now + (index * 0.08));
+            osc.frequency.setValueAtTime(f, now + (index * 0.06));
 
-            gain.gain.setValueAtTime(0.08, now + (index * 0.08));
-            gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.08) + 0.25);
+            gain.gain.setValueAtTime(0.2, now + (index * 0.06));
+            gain.gain.exponentialRampToValueAtTime(0.001, now + (index * 0.06) + 0.2);
 
             osc.connect(gain);
             gain.connect(this.audioCtx.destination);
 
-            osc.start(now + (index * 0.08));
-            osc.stop(now + (index * 0.08) + 0.25);
+            osc.start(now + (index * 0.06));
+            osc.stop(now + (index * 0.06) + 0.2);
         });
     }
 
-    // نغمة نجاح
     playSuccessTone() {
         const now = this.audioCtx.currentTime;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
 
         osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, now);
-        osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+        osc.frequency.setValueAtTime(523.25, now);
+        osc.frequency.exponentialRampToValueAtTime(1046.50, now + 0.25);
 
-        gain.gain.setValueAtTime(0.1, now);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
 
         osc.connect(gain);
         gain.connect(this.audioCtx.destination);
 
         osc.start(now);
-        osc.stop(now + 0.3);
+        osc.stop(now + 0.4);
     }
 
-    // نغمة تنبيه مميزة
     playAlertTone() {
+        const now = this.audioCtx.currentTime;
+        for (let i = 0; i < 2; i++) {
+            const osc = this.audioCtx.createOscillator();
+            const gain = this.audioCtx.createGain();
+
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(400, now + (i * 0.15));
+            osc.frequency.setValueAtTime(800, now + (i * 0.15) + 0.07);
+
+            gain.gain.setValueAtTime(0.2, now + (i * 0.15));
+            gain.gain.exponentialRampToValueAtTime(0.001, now + (i * 0.15) + 0.12);
+
+            osc.connect(gain);
+            gain.connect(this.audioCtx.destination);
+
+            osc.start(now + (i * 0.15));
+            osc.stop(now + (i * 0.15) + 0.12);
+        }
+    }
+
+    playBellTone() {
         const now = this.audioCtx.currentTime;
         const osc = this.audioCtx.createOscillator();
         const gain = this.audioCtx.createGain();
 
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(300, now);
-        osc.frequency.setValueAtTime(450, now + 0.1);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(1200, now);
+        
+        gain.gain.setValueAtTime(0.3, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.6);
 
-        gain.gain.setValueAtTime(0.08, now);
+        osc.connect(gain);
+        gain.connect(this.audioCtx.destination);
+
+        osc.start(now);
+        osc.stop(now + 0.6);
+    }
+
+    playModernTone(type) {
+        const now = this.audioCtx.currentTime;
+        const osc = this.audioCtx.createOscillator();
+        const gain = this.audioCtx.createGain();
+
+        osc.type = 'square';
+        osc.frequency.setValueAtTime(type === 'in' ? 700 : 500, now);
+        osc.frequency.setValueAtTime(type === 'in' ? 900 : 700, now + 0.1);
+
+        gain.gain.setValueAtTime(0.15, now);
         gain.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
 
         osc.connect(gain);
@@ -129,19 +176,54 @@ class AttendanceSoundManager {
         osc.stop(now + 0.25);
     }
 
-    // تبديل وضع كتم الصوت
     toggleMute() {
         this.isMuted = !this.isMuted;
         localStorage.setItem('attendance_sound_muted', this.isMuted);
+        this.saveToFirebase();
         return this.isMuted;
     }
 
-    // تغيير النغمة
     setTone(toneName) {
         this.currentTone = toneName;
         localStorage.setItem('attendance_sound_tone', toneName);
+        this.saveToFirebase();
+    }
+
+    // مزامنة غير متزامنة في الخلفية لضمان عدم بطء فتح التطبيق
+    async syncWithFirebase() {
+        if (!this.databaseUrl) return;
+        try {
+            const response = await fetch(`${this.databaseUrl}/settings/sound.json`);
+            if (response.ok) {
+                const data = await response.json();
+                if (data) {
+                    if (data.isMuted !== undefined) {
+                        this.isMuted = data.isMuted;
+                        localStorage.setItem('attendance_sound_muted', this.isMuted);
+                    }
+                    if (data.currentTone) {
+                        this.currentTone = data.currentTone;
+                        localStorage.setItem('attendance_sound_tone', this.currentTone);
+                    }
+                }
+            }
+        } catch (e) {
+            console.log("العمل دون اتصال بالإنترنت، جاري استخدام الذاكرة المحلية.");
+        }
+    }
+
+    async saveToFirebase() {
+        if (!this.databaseUrl) return;
+        try {
+            await fetch(`${this.databaseUrl}/settings/sound.json`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isMuted: this.isMuted, currentTone: this.currentTone })
+            });
+        } catch (e) {
+            // تجاهل صامت لتفادي أي تأثير على الأداء
+        }
     }
 }
 
-// تصدير كائن جاهز للاستخدام الفوري في المشروع
 const attendanceSound = new AttendanceSoundManager();
