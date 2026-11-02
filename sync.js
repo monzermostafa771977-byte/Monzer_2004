@@ -54,7 +54,7 @@ function sched(){if(!currentUser)return;clearTimeout(tm);tm=setTimeout(doSync,25
 function loginWithGoogle() {
   if (typeof firebase === 'undefined') return;
   var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithPopup(provider).then(function(result) {
+  firebase.auth().signInWithRedirect(provider).then(function(result) {
     currentUser = result.user;
     render();
     doSync();
