@@ -50,27 +50,6 @@ async function doSync(){
 
 function sched(){if(!currentUser)return;clearTimeout(tm);tm=setTimeout(doSync,2500)}
 
-// Firebase Authentication Handlers
-function loginWithGoogle() {
-  if (typeof firebase === 'undefined') return;
-  var provider = new firebase.auth.GoogleAuthProvider();
-  firebase.auth().signInWithRedirect(provider).then(function(result) {
-    currentUser = result.user;
-    render();
-    doSync();
-  }).catch(function(error) {
-    alert('تعذر تسجيل الدخول: ' + error.message);
-  });
-}
-
-function logoutGoogle() {
-  if (typeof firebase === 'undefined') return;
-  firebase.auth().signOut().then(function() {
-    currentUser = null;
-    render();
-  });
-}
-
 // Auth State Change Listener
 if (typeof firebase !== 'undefined') {
   firebase.auth().onAuthStateChanged(function(user) {
@@ -81,7 +60,6 @@ if (typeof firebase !== 'undefined') {
 }
 
 window.schedSync=sched;window.syncNow=doSync;window.monzerMerge=merge;
-window.loginWithGoogle=loginWithGoogle;window.logoutGoogle=logoutGoogle;
 window.doSync=doSync;
 window.addEventListener('online',sched);
 document.addEventListener('visibilitychange',function(){if(!document.hidden)sched()});
