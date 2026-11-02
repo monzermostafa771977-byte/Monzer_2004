@@ -29,9 +29,8 @@ h2{font-size:16px;margin:0 0 10px}
 .row>*{flex:1;min-width:120px}
 label{display:block;font-size:13px;color:var(--mu);margin:8px 0 4px}
 input,select,textarea{width:100%;padding:11px;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx);font:inherit}
-button{font:inherit;border:0;border-radius:12px;padding:13px;background:var(--pr);color:var(--prt);font-weight:700;width:100%;margin-top:10px;cursor:pointer}
+button{font:inherit;border:0;border-radius:12px;padding:13px;background:var(--pr);color:var(--prt);font-weight:700;width:100%;margin-top:10px}
 button.sec{background:var(--bg);color:var(--tx);border:1px solid var(--bd)}
-button.gbtn{background:#4285f4;color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:15px;margin-top:12px}
 button.x{width:auto;margin:0;padding:6px 10px;background:transparent;color:var(--wr);border:1px solid var(--bd);font-weight:400}
 .big{font-size:22px;font-weight:800}
 .warn{background:var(--wb);color:var(--wr);border:1px solid var(--wr);border-radius:12px;padding:12px;margin-bottom:12px;font-weight:700}
@@ -42,7 +41,7 @@ button.x{width:auto;margin:0;padding:6px 10px;background:transparent;color:var(-
 .li:first-of-type{border-top:0}
 .kv{display:flex;justify-content:space-between;padding:6px 0;font-size:14px}
 .kv b{font-weight:700}
-.bar{height:8px;background:var(--bd);border-radius:99px;overflow:hidden;margin-top:4px}
+.bar{height:8px;background:var(--bd);border-radius:9px;overflow:hidden;margin-top:4px}
 .bar i{display:block;height:100%;background:var(--pr)}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--card);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px)}
 nav a{flex:1;text-align:center;padding:10px 2px;font-size:11px;color:var(--mu);cursor:pointer}
@@ -56,19 +55,17 @@ nav a.on{color:var(--pr);font-weight:700}
 .rt{margin-inline-start:auto;display:flex;gap:8px;align-items:center}
 .cbtn{width:auto;margin:0;padding:6px 11px;border-radius:99px;background:var(--card);color:var(--tx);border:1px solid var(--bd);font-size:16px;font-weight:400}
 .cbtn span{font-size:12px;color:var(--wr);font-weight:700}
-.user-badge{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:10px;background:var(--card);border:1px solid var(--bd);font-size:12px}
-.user-badge img{width:22px;height:22px;border-radius:50%}
+.bub{max-width:88%;padding:8px 12px;border-radius:14px;margin:6px 0;font-size:14px;white-space:pre-wrap;word-break:break-word}
+.bub.me{background:var(--pr);color:var(--prt);margin-inline-start:auto}
+.bub.th{background:var(--bd);color:var(--tx)}
+.bub small{display:block;opacity:.7;font-size:11px;margin-top:3px}
 </style>
-<!-- Firebase SDK Compatibility -->
-<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.0.0/firebase-database-compat.js"></script>
 </head>
 <body>
 <main id="app"></main>
 <nav id="nav"></nav>
 <script>
-var KEY='hodoori_v1',S={salary:0,att:{},leaves:[],ot:[],work:[],shifts:[],rates:{}},tab='today',currentUser=null;
+var KEY='hodoori_v1',S={salary:0,att:{},leaves:[],ot:[],work:[],shifts:[],rates:{}},tab='today';
 try{var r=localStorage.getItem(KEY);if(r)S=Object.assign(S,JSON.parse(r))}catch(e){}
 function save(){S._ts=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}if(window.schedSync)schedSync()}
 var p2=function(n){return String(n).padStart(2,'0')};
@@ -128,6 +125,19 @@ function vLeave(){
  h+='<div class="card"><h2>سجل الإجازات</h2>'+(ls.length?ls.map(function(o){var f=o.ds[0],e=o.ds[o.ds.length-1];return '<div class="li"><span>'+(f==e?dayName(f):'من '+dayName(f)+'<br>إلى '+dayName(e))+'<br><small style="color:var(--mu)">'+NAMES[o.type]+' • '+o.n+' يوم'+(o.type=='comp'&&o.sourceDate?' • بدل عن '+dayName(o.sourceDate):'')+'</small></span><button class="x" data-a="dell" data-i="'+o.k+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد إجازات مسجلة</div>')+'</div>';
  return h;
 }
+function vLeaveOld(){
+ var n=new Date(),y=n.getFullYear(),q=Math.floor(n.getMonth()/3),t=qTotal(y,q);
+ var h='<h1>الإجازات</h1><div class="sub">رصيد سنة '+y+'</div>'+banner();
+ h+='<div class="card"><h2>الرصيد المتبقي</h2>';
+ Object.keys(QUOTA).forEach(function(k){var u=used(y,k),rem=QUOTA[k]-u;h+='<div class="kv"><span>'+NAMES[k]+'</span><b style="'+(rem<0?'color:var(--wr)':'')+'">المتبقي '+rem+' من '+QUOTA[k]+'</b></div><div class="bar"><i style="width:'+Math.min(100,u/QUOTA[k]*100)+'%"></i></div>'});
+ h+='<div class="kv" style="margin-top:12px"><span>إجازات البدل المكتسبة</span><b>'+compEarned()+' يوم</b></div><div class="kv"><span>إجازات البدل المستخدمة</span><b>'+compUsed()+' يوم</b></div><div class="kv"><span>رصيد إجازات البدل المتبقي</span><b style="color:var(--ok)">'+compBalance()+' يوم</b></div>';
+ h+='<div class="kv" style="margin-top:8px"><span>إجمالي '+qLabel(q)+'</span><b style="'+(t>9?'color:var(--wr)':'')+'">'+t+' يوم</b></div>';
+ h+='<div class="kv"><span>إجمالي هذا الشهر</span><b>'+mTotal(ds(n).slice(0,7))+' يوم</b></div></div>';
+ h+='<div class="card"><h2>تسجيل إجازة</h2><label>النوع</label><select id="lt"><option value="annual">سنوية</option><option value="casual">عارضة</option><option value="sick">مرضية</option></select><div class="row"><div><label>تاريخ البداية</label><input type="date" id="ld" value="'+ds(n)+'"></div><div><label>عدد الأيام</label><input type="number" id="ln" value="1" min="0.5" step="0.5"></div></div><button data-a="leave">حفظ الإجازة</button></div>';
+ var ls=S.leaves.slice().sort(function(a,b){return a.date<b.date?1:-1}).slice(0,15);
+ h+='<div class="card"><h2>سجل الإجازات</h2>'+(ls.length?ls.map(function(l){return '<div class="li"><span>'+dayName(l.date)+'<br><small style="color:var(--mu)">'+NAMES[l.type]+' • '+l.days+' يوم</small></span><button class="x" data-a="dell" data-i="'+l.id+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد إجازات مسجلة</div>')+'</div>';
+ return h;
+}
 
 function vWork(){
  var n=new Date(),d=ds(n),ym=d.slice(0,7),dl=daily();
@@ -143,6 +153,17 @@ function vWork(){
  h+='<div class="card"><h2>🌙 أيام السهر (4 م – 7 م)</h2><div class="sub">حتى 6 م نهاري (+35%) وبعدها ليلي (+70%)</div><label>التاريخ</label><input type="date" id="od" value="'+d+'"><div class="row"><div><label>من</label><input type="time" id="of" value="16:00"></div><div><label>إلى</label><input type="time" id="ot" value="19:00"></div></div><button data-a="ot">حفظ يوم السهر</button><div class="kv" style="margin-top:10px"><span>هذا الشهر</span><b>'+os.length+' يوم • '+oh+' ساعة • '+money(op)+' جنيه</b></div>'+(os.length?os.slice().sort(function(a,b){return a.date<b.date?1:-1}).map(function(o){return '<div class="li"><span>'+dayName(o.date)+'<br><small style="color:var(--mu)">'+o.from+' ← '+o.to+' • '+otHours(o)+' ساعة • '+money(otPay(o))+' جنيه</small></span><button class="x" data-a="delo" data-i="'+o.id+'">حذف</button></div>'}).join(''):'<div class="empty">لا توجد أيام سهر هذا الشهر</div>')+'</div>';
  h+='<div class="card"><h2>📅 العمل يوم الجمعة أو السبت</h2><div class="sub">يوم بدل + أجر يوم</div><label>التاريخ</label><input type="date" id="wd2" value="'+d+'"><button data-a="wkw">حفظ يوم العمل</button><div class="kv" style="margin-top:10px"><span>هذا الشهر</span><b>'+ws.length+' يوم • '+money(wp)+' جنيه</b></div>'+wl(ws,1,true)+'</div>';
  h+='<div class="card"><h2>🎉 العمل في الأعياد الرسمية</h2><div class="sub">أجر يومين فقط (بدون يوم بدل)</div><label>التاريخ</label><input type="date" id="wd3" value="'+d+'"><button data-a="wkh">حفظ يوم العيد</button><div class="kv" style="margin-top:10px"><span>هذا الشهر</span><b>'+hs.length+' يوم • '+money(hp)+' جنيه</b></div>'+wl(hs,2,false)+'</div>';
+ return h;
+}
+function vWorkOld(){
+ var d=ds(new Date()),h='<h1>العمل الإضافي</h1><div class="sub">الإضافي من 4 م إلى 7 م: حتى 6 م نهاري (+35%) وبعدها ليلي (+70%)</div>';
+ if(!(+S.salary))h+='<div class="warn">أدخل مرتبك الشهري في تبويب التقرير ليحسب التطبيق المبالغ.</div>';
+ h+='<div class="card"><h2>ساعات إضافي (بعد الدوام)</h2><label>التاريخ</label><input type="date" id="od" value="'+d+'"><div class="row"><div><label>من</label><input type="time" id="of" value="16:00"></div><div><label>إلى</label><input type="time" id="ot" value="19:00"></div></div><button data-a="ot">حفظ الإضافي</button>';
+ var os=S.ot.slice().sort(function(a,b){return a.date<b.date?1:-1}).slice(0,8);
+ h+=os.map(function(o){return '<div class="li"><span>'+dayName(o.date)+'<br><small style="color:var(--mu)">'+o.from+' ← '+o.to+' • '+otHours(o)+' ساعة • '+money(otPay(o))+' جنيه</small></span><button class="x" data-a="delo" data-i="'+o.id+'">حذف</button></div>'}).join('')+'</div>';
+ h+='<div class="card"><h2>عمل في إجازة رسمية أو الجمعة والسبت</h2><label>التاريخ</label><input type="date" id="wd" value="'+d+'"><label>النوع</label><select id="wk"><option value="holiday">إجازة رسمية / عيد</option><option value="weekend">جمعة أو سبت</option></select><div class="sub" style="margin:8px 0 0">الإجازة الرسمية = أجر يومين + يوم بدل<br>الجمعة/السبت = أجر يوم + يوم بدل</div><button data-a="work">حفظ</button>';
+ var ws=S.work.slice().sort(function(a,b){return a.date<b.date?1:-1}).slice(0,8);
+ h+=ws.map(function(w){var pay=(w.kind=='holiday'?2:1)*daily();return '<div class="li"><span>'+dayName(w.date)+'<br><small style="color:var(--mu)">'+(w.kind=='holiday'?'إجازة رسمية':'جمعة/سبت')+' • '+money(pay)+' جنيه + يوم بدل</small></span><button class="x" data-a="delw" data-i="'+w.id+'">حذف</button></div>'}).join('')+'</div>';
  return h;
 }
 
@@ -185,32 +206,19 @@ function vRep(){
  return h;
 }
 
-function syncCard(){
- var h='<div class="card"><h2>🔄 المزامنة التلقائية بإيميلك</h2>';
- if(currentUser){
-   h+='<div class="sub">المزامنة تعمل تلقائياً مع بريدك الإلكتروني <b>'+currentUser.email+'</b>. يتم حفظ وتحديث بياناتك بأمان وسرية م التامة.</div>';
-   h+='<button data-a="synow">مزامنة الآن</button>';
-   h+='<button data-a="gout" class="sec">تسجيل الخروج من الحساب</button>';
- }else{
-   h+='<div class="sub">سجّل دخولك بحساب Google لمزامنة بياناتك تلقائياً على كل أجهزتك بكل سهولة ودون تذكر رموز.</div>';
-   h+='<button data-a="gin" class="gbtn">🔑 تسجيل الدخول بحساب Google</button>';
- }
- return h+'<div id="sst" class="sub"></div></div>';
-}
-
-function backupCard(){return '<div class="card"><h2>النسخة الاحتياطية اليدوية</h2><div class="sub">يمكنك نسخ بياناتك واحفظها في ملاحظات للاسترجاع اليدوي.</div><button data-a="bk">نسخ بياناتي</button><label>الصق النسخة هنا للاسترجاع</label><textarea id="bkt" rows="3"></textarea><button data-a="rs" class="sec">استرجاع البيانات</button><div id="bkm" class="sub"></div></div>'}
+function syncCard(){var c=null;try{c=JSON.parse(localStorage.getItem('monzer_sync'))}catch(e){}
+ var h='<div class="card"><h2>🔄 المزامنة بين هواتفك</h2>';
+ if(c)h+='<div class="sub">المزامنة مفعّلة ✅ تعمل تلقائياً عند توفر الإنترنت، والتطبيق يعمل بدونها. بياناتك تُشفَّر قبل رفعها.</div><div class="kv"><span>آخر مزامنة</span><b>'+(c.l?new Date(c.l).toLocaleString('ar-EG'):'لم تتم بعد')+'</b></div><button data-a="synow">مزامنة الآن</button><button data-a="syc" class="sec">عرض رمز الربط للهواتف الأخرى</button><textarea id="sco" rows="3" style="display:none"></textarea><button data-a="syx" class="sec">إيقاف المزامنة</button>';
+ else h+='<div class="sub">الهاتف الأول: أدخل رابط قاعدة بيانات Firebase وكلمة سر من اختيارك.</div><label>رابط قاعدة البيانات</label><input id="fu" placeholder="https://xxxx-default-rtdb.firebaseio.com"><label>كلمة سر المزامنة</label><input id="fp" type="password" placeholder="6 أحرف على الأقل"><button data-a="syn">تفعيل المزامنة</button><div class="sub" style="margin-top:12px">هاتف آخر: الصق رمز الربط من الهاتف الأول.</div><textarea id="fc" rows="2" placeholder="رمز الربط"></textarea><button data-a="syj" class="sec">ربط هذا الهاتف</button>';
+ return h+'<div id="sst" class="sub"></div></div>'}
+function backupCard(){return '<div class="card"><h2>النسخة الاحتياطية</h2><div class="sub">انسخ بياناتك واحفظها في ملاحظات أو أرسلها لنفسك. وللاسترجاع الصق النص هنا.</div><button data-a="bk">نسخ بياناتي</button><label>الصق النسخة هنا للاسترجاع</label><textarea id="bkt" rows="3"></textarea><button data-a="rs" class="sec">استرجاع البيانات</button><div id="bkm" class="sub"></div></div>'}
 var ICON='<svg viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="mg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2dd4bf"/><stop offset="1" stop-color="#0f766e"/></linearGradient></defs><rect width="512" height="512" rx="120" fill="url(#mg)"/><circle cx="256" cy="262" r="140" fill="none" stroke="#fff" stroke-width="30"/><path d="M256 176v90l62 40" fill="none" stroke="#fff" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/><circle cx="380" cy="132" r="42" fill="#fbbf24" stroke="#0f766e" stroke-width="14"/></svg>';
 function offStatus(){var e=document.getElementById('offs');if(!e)return;if(!navigator.onLine){e.className='pill off';e.textContent='📴 بدون إنترنت'}else if(window.__offReady){e.className='pill';e.textContent='✅ يعمل بدون إنترنت'}else{e.className='pill';e.textContent=''}}
 window.addEventListener('online',offStatus);window.addEventListener('offline',offStatus);
-
-function getBrandHTML(){
- var uBadge = currentUser ? '<div class="user-badge"><img src="'+(currentUser.photoURL||'icon-192.png')+'"><span>'+currentUser.displayName+'</span></div>' : '';
- return '<div class="brand">'+ICON+'<b>Monzer</b><span class="rt">'+uBadge+'<span class="pill" id="offs"></span><button class="cbtn" data-t="chat" type="button">💬<span id="cbd"></span></button></span></div>';
-}
-
+var BRAND='<div class="brand">'+ICON+'<b>Monzer</b><span class="rt"><span class="pill" id="offs"></span><button class="cbtn" data-t="chat" type="button">💬<span id="cbd"></span></button></span></div>';
 function render(){
  var v={today:vToday,leave:vLeave,work:vWork,rep:vRep,shift:vShift,chat:function(){return window.vChat?window.vChat():''}}[tab];
- document.getElementById('app').innerHTML=getBrandHTML()+v();offStatus();if(window.chatBadge)chatBadge();
+ document.getElementById('app').innerHTML=BRAND+v();offStatus();if(window.chatBadge)chatBadge();
  document.getElementById('nav').innerHTML=TABS.map(function(t){return '<a data-t="'+t[0]+'" class="'+(t[0]==tab?'on':'')+'"><span>'+t[1]+'</span>'+t[2]+'</a>'}).join('');
 }
 
@@ -232,9 +240,7 @@ document.addEventListener('click',function(e){
  else if(a=='delw'){if(S.leaves.some(function(l){return l.type=='comp'&&String(l.sourceWorkId)==String(b.dataset.i)})){alert('لا يمكن حذف يوم العمل هذا لأنه مرتبط بإجازة بدل مستخدمة. احذف سجل إجازة البدل المرتبط أولاً إذا كان التسجيل خاطئاً.');return}S.del=S.del||{};S.del['w:'+b.dataset.i]=1;S.work=S.work.filter(function(x){return x.id!=b.dataset.i})}
  else if(a=='wkw'||a=='wkh'){var wd2=V(a=='wkw'?'wd2':'wd3'),kind2=a=='wkw'?'weekend':'holiday';if(!wd2)return;if(S.work.some(function(w){return w.date==wd2&&w.kind==kind2})){alert('هذا اليوم مسجل بالفعل ولا يمكن احتساب بدل له مرتين');return}S.work.push({id:id,date:wd2,kind:kind2})}
  else if(a=='sal'){S.salary=parseFloat(V('sal'))||0}
- else if(a=='gin'){if(window.loginWithGoogle)window.loginWithGoogle();return}
- else if(a=='gout'){if(window.logoutGoogle)window.logoutGoogle();return}
- else if(a=='synow'){if(window.doSync)window.doSync();return}
+ else if(a=='syn'||a=='syj'||a=='syc'||a=='synow'||a=='syx'){window.syncAct(a);return}
  else if(a=='shift'){var t=b.dataset.ty,sd=V('sd_'+t),si=V('si_'+t),so=V('so_'+t);if(!sd||!si||!so)return;var rc={id:id,date:sd,type:t,'in':si,out:so};if(t=='ram'){rc.ot=document.getElementById('sot_ram').checked;rc.of=V('sf_ram');rc.ott=V('st_ram')}S.shifts=S.shifts||[];S.shifts.push(rc)}
  else if(a=='delsh'){S.del=S.del||{};S.del['s:'+b.dataset.i]=1;S.shifts=(S.shifts||[]).filter(function(x){return x.id!=b.dataset.i})}
  else if(a=='rates'){var nv2=function(x){var v=parseFloat(x);return isNaN(v)?0:Math.max(0,v)};S.rates={mid:nv2(V('rmid')),night:nv2(V('rnight')),ramot:nv2(V('rramot'))}}
