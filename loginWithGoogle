@@ -1,0 +1,19 @@
+function loginWithGoogle() {
+  if (typeof firebase === 'undefined') return;
+  
+  // إظهار تنبيه بصري سريع للمستخدم بأن العملية تبدأ فوراً
+  var btn = document.querySelector('[data-a="gin"]');
+  if(btn) {
+    btn.disabled = true;
+    btn.innerHTML = '⏳ جاري تحويلك لصفحة Google الرسمية...';
+  }
+
+  var provider = new firebase.auth.GoogleAuthProvider();
+  firebase.auth().signInWithRedirect(provider).catch(function(error) {
+    alert('تعذر تسجيل الدخول: ' + error.message);
+    if(btn) {
+      btn.disabled = false;
+      btn.innerHTML = '🔑 تسجيل الدخول بحساب Google';
+    }
+  });
+}
