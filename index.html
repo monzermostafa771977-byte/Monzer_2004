@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
-<title>Monzer - مُنذِر (v10 ProMaster)</title>
+<title>Monzer - مُنذِر (v11 ProMaster)</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232dd4bf'/%3E%3Cstop offset='1' stop-color='%230f766e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='120' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='262' r='140' fill='none' stroke='white' stroke-width='30'/%3E%3Cpath d='M256 176v90l62 40' fill='none' stroke='white' stroke-width='30' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='380' cy='132' r='42' fill='%23fbbf24' stroke='%230f766e' stroke-width='14'/%3E%3C/svg%3E">
 <style>
@@ -118,8 +118,9 @@ var TABS = [
   ['today', '🕗', 'الحضور'],
   ['leave', '🏖️', 'الإجازات'],
   ['work', '⏱️', 'الإضافي والسهر'],
-  ['shift', '🔄', 'الورديات ورمضان'],
-  ['rep', '📊', 'التقرير والربح'],
+  ['weekends', '📅', 'أيام البدل'],
+  ['shift', '🔄', 'الورديات'],
+  ['rep', '📊', 'التقرير'],
   ['settings', '⚙️', 'الإعدادات']
 ];
 
@@ -292,6 +293,42 @@ function vLeave(){
   return h;
 }
 
+
+function vWeekends(){
+  var h = '<h1>سجل أيام الجمعة والسبت المستحقة للبدل</h1><div class="sub">عرض وتتبع كافة أيام الراحات الأسبوعية التي تم العمل بها على مدار العام مع الإجمالي الشهري وإمكانية الحذف.</div>';
+
+  var ws = S.work.filter(function(w){ return w.kind === 'weekend'; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+
+  // Group by month (YYYY-MM)
+  var grouped = {};
+  ws.forEach(function(w){
+    var ym = w.date.slice(0,7);
+    grouped[ym] = grouped[ym] || [];
+    grouped[ym].push(w);
+  });
+
+  var months = Object.keys(grouped).sort().reverse();
+
+  h += '<div class="card"><h2>🎁 إجمالي أيام البدل المكتسبة</h2>';
+  h += '<div class="kv"><span>إجمالي الأيام المكتسبة (الجمعة والسبت)</span><b class="big" style="color:var(--ok)">' + totalReplacementEarned() + ' يوم</b></div>';
+  h += '</div>';
+
+  if(months.length === 0){
+    h += '<div class="card"><div class="empty">لا توجد أيام جمعة أو سبت مسجلة للعمل حتى الآن</div></div>';
+  } else {
+    months.forEach(function(ym){
+      var daysList = grouped[ym];
+      h += '<div class="card"><h2>📅 شهر ' + ym + ' (الإجمالي: ' + daysList.length + ' يوم)</h2>';
+      daysList.forEach(function(w){
+        h += '<div class="li"><span><b>' + dayName(w.date) + '</b><br><small style="color:var(--mu)">التاريخ: ' + w.date + ' • القيمة المالية: ' + money(w.customPay || dailyRate()) + '</small></span><button class="x" data-a="delw" data-i="' + w.id + '">🗑️ حذف</button></div>';
+      });
+      h += '</div>';
+    });
+  }
+
+  return h;
+}
+
 function vWork(){
   var n = new Date(), d = ds(n), ym = d.slice(0,7), dl = dailyRate();
   var os = S.ot.filter(function(x){ return x.date.slice(0,7) === ym; });
@@ -328,31 +365,32 @@ function vWork(){
   h += '</div>';
 
   h += '<div class="card"><h2>📅 ثانياً: تسجيل العمل أيام الراحات (الجمعة والسبت)</h2>';
-  h += '<div class="sub">تُحسب تلقائياً: <b>أجر يوم كامل + تضاف تلقائياً إلى رصيد إجازات البدل</b>.</div>';
+  h += '<div class="sub">تُحسب: <b>أجر يوم كامل (أو أدخل القيمة يدوياً) + تضاف تلقائياً إلى رصيد إجازات البدل</b>.</div>';
   h += '<label>التاريخ</label><input type="date" id="wd2" value="'+d+'">';
-  h += '<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="w_extra2" style="width:auto"> تمديد سهر في هذا اليوم</label>';
+  h += '<label>القيمة المالية ليوم الجمعة/السبت (أدخل المبلغ يدوياً أو اتركها للحساب الافتراضي)</label><input type="number" id="wp_manual" placeholder="مثال: 350 جنيه">';
   h += '<button data-a="wkw">تسجيل عمل جمعة / سبت</button>';
   h += '<div class="kv" style="margin-top:12px"><span>إجمالي الجمعة والسبت هذا الشهر</span><b>'+ws.length+' أيام = '+money(wp)+' + '+ws.length+' يوم بدل متراكم</b></div>';
   
   if(ws.length){
     h += '<div style="margin-top:10px">';
     ws.forEach(function(w){
-      h += '<div class="li"><span><b>'+dayName(w.date)+'</b><br><small style="color:var(--mu)">عمل جمعة/سبت (+1 يوم بدل تلقائي)</small></span><button class="x" data-a="delw" data-i="'+w.id+'">🗑️ حذف</button></div>';
+      h += '<div class="li"><span><b>'+dayName(w.date)+'</b><br><small style="color:var(--mu)">عمل جمعة/سبت (+1 يوم بدل) • القيمة: '+money(w.customPay||dl)+'</small></span><button class="x" data-a="delw" data-i="'+w.id+'">🗑️ حذف</button></div>';
     });
     h += '</div>';
   }
   h += '</div>';
 
   h += '<div class="card"><h2>🎉 ثالثاً: العمل في الأعياد والعطلات الرسمية</h2>';
-  h += '<div class="sub">تُحسب تلقائياً: <b>أجر يومين (مثلي الأجر 200%) + تضاف تلقائياً إلى رصيد إجازات البدل</b>.</div>';
+  h += '<div class="sub">تُحسب: <b>أجر يومين (200% أو القيمة المدخلة يدوياً) • بدون بدل إجازة</b>.</div>';
   h += '<label>التاريخ</label><input type="date" id="wd3" value="'+d+'">';
+  h += '<label>القيمة المالية لعطلة العيد (أدخل المبلغ يدوياً أو اتركها للحساب الافتراضي يومين)</label><input type="number" id="hp_manual" placeholder="مثال: 700 جنيه">';
   h += '<button data-a="wkh">تسجيل عمل يوم عيد / عطلة رسمية</button>';
-  h += '<div class="kv" style="margin-top:12px"><span>إجمالي الأعياد هذا الشهر</span><b>'+hs.length+' أيام = '+money(hp)+' + '+hs.length+' يوم بدل متراكم</b></div>';
+  h += '<div class="kv" style="margin-top:12px"><span>إجمالي الأعياد هذا الشهر</span><b>'+hs.length+' أيام = '+money(hp)+' (لا يوجد بدل إجازة للأعياد)</b></div>';
   
   if(hs.length){
     h += '<div style="margin-top:10px">';
     hs.forEach(function(w){
-      h += '<div class="li"><span><b>'+dayName(w.date)+'</b><br><small style="color:var(--mu)">عمل عيد/عطلة (+1 يوم بدل تلقائي)</small></span><button class="x" data-a="delw" data-i="'+w.id+'">🗑️ حذف</button></div>';
+      h += '<div class="li"><span><b>'+dayName(w.date)+'</b><br><small style="color:var(--mu)">عمل عيد (أجر يومين) • القيمة: '+money(w.customPay||(dl*2))+'</small></span><button class="x" data-a="delw" data-i="'+w.id+'">🗑️ حذف</button></div>';
     });
     h += '</div>';
   }
@@ -638,9 +676,9 @@ function render(){
   if(theme) document.documentElement.setAttribute('data-theme', theme);
   else document.documentElement.removeAttribute('data-theme');
 
-  var viewFn = { today: vToday, leave: vLeave, work: vWork, shift: vShift, rep: vRep, settings: vSettings }[tab];
+  var viewFn = { today: vToday, leave: vLeave, work: vWork, weekends: vWeekends, shift: vShift, rep: vRep, settings: vSettings }[tab];
   
-  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>مُنذِر (v10 ProMaster)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
+  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>مُنذِر (v11 ProMaster)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
   
   document.getElementById('app').innerHTML = brandHeader + viewFn();
   document.getElementById('nav').innerHTML = TABS.map(function(t){
