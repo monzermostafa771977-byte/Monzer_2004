@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
-<title>Monzer - مُنذِر (v9 FixMaster)</title>
+<title>Monzer - مُنذِر (v10 ProMaster)</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232dd4bf'/%3E%3Cstop offset='1' stop-color='%230f766e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='120' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='262' r='140' fill='none' stroke='white' stroke-width='30'/%3E%3Cpath d='M256 176v90l62 40' fill='none' stroke='white' stroke-width='30' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='380' cy='132' r='42' fill='%23fbbf24' stroke='%230f766e' stroke-width='14'/%3E%3C/svg%3E">
 <style>
@@ -145,7 +145,7 @@ function used(y, t){
   }).reduce(function(a,l){ return a + l.days; }, 0);
 }
 
-function totalReplacementEarned(){ return S.work.length; }
+function totalReplacementEarned(){ return S.work.filter(function(w){ return w.kind === 'weekend'; }).length; }
 function replacementBalance(){
   var earned = totalReplacementEarned() + (S.manualRepEarned || 0);
   var taken = S.leaves.filter(function(l){ return l.type === 'replacement'; }).reduce(function(a,l){ return a + l.days; }, 0) + (S.manualRepDeducted || 0);
@@ -300,8 +300,8 @@ function vWork(){
   
   var oh = os.reduce(function(a,o){ return a + otHours(o); }, 0);
   var op = os.reduce(function(a,o){ return a + otPay(o); }, 0);
-  var wp = ws.reduce(function(a,w){ return a + dl + (w.extraOtPay || 0); }, 0);
-  var hp = hs.reduce(function(a,w){ return a + (dl * 2) + (w.extraOtPay || 0); }, 0);
+  var wp = ws.reduce(function(a,w){ return a + (w.customPay > 0 ? w.customPay : dl); }, 0);
+  var hp = hs.reduce(function(a,w){ return a + (w.customPay > 0 ? w.customPay : (dl * 2)); }, 0);
 
   var h = '<h1>ساعات السهر والأعياد والراحات</h1><div class="sub">احتساب تلقائي ويدوي دقيق للساعات الإضافية لشهر '+ym+'</div>';
 
@@ -640,7 +640,7 @@ function render(){
 
   var viewFn = { today: vToday, leave: vLeave, work: vWork, shift: vShift, rep: vRep, settings: vSettings }[tab];
   
-  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>مُنذِر (v9 FixMaster)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
+  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>مُنذِر (v10 ProMaster)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
   
   document.getElementById('app').innerHTML = brandHeader + viewFn();
   document.getElementById('nav').innerHTML = TABS.map(function(t){
@@ -750,14 +750,24 @@ document.addEventListener('click', function(e){
     }
   }
   else if(a === 'delo'){ S.ot = S.ot.filter(function(x){ return x.id != b.dataset.i; }); }
-  else if(a === 'wkw' || a === 'wkh'){
-    var wd2 = V(a === 'wkw' ? 'wd2' : 'wd3');
-    var isExtra = (a === 'wkw' && document.getElementById('w_extra2') && document.getElementById('w_extra2').checked);
+  else if(a === 'wkw'){
+    var wd2 = V('wd2');
+    var manualP = parseFloat(V('wp_manual')) || 0;
     if(wd2) S.work.push({
       id: id,
       date: wd2,
-      kind: a === 'wkw' ? 'weekend' : 'holiday',
-      extraOtPay: isExtra ? (hourlyRate() * 2) : 0
+      kind: 'weekend',
+      customPay: manualP
+    });
+  }
+  else if(a === 'wkh'){
+    var wd3 = V('wd3');
+    var manualP = parseFloat(V('hp_manual')) || 0;
+    if(wd3) S.work.push({
+      id: id,
+      date: wd3,
+      kind: 'holiday',
+      customPay: manualP
     });
   }
   else if(a === 'delw'){ S.work = S.work.filter(function(x){ return x.id != b.dataset.i; }); }
