@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
-<title>Monzer - مُنذِر</title>
+<title>Monzer - مُنذِر (v8 EditMaster)</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232dd4bf'/%3E%3Cstop offset='1' stop-color='%230f766e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='120' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='262' r='140' fill='none' stroke='white' stroke-width='30'/%3E%3Cpath d='M256 176v90l62 40' fill='none' stroke='white' stroke-width='30' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='380' cy='132' r='42' fill='%23fbbf24' stroke='%230f766e' stroke-width='14'/%3E%3C/svg%3E">
 <style>
@@ -72,10 +72,12 @@ nav a.on{color:var(--pr);font-weight:800}
 <nav id="nav"></nav>
 
 <script>
-var KEY = 'monzer_app_v4';
+var KEY = 'monzer_app_v5';
 var S = {
   email: '',
-  salary: 0,
+  salary: 0, // الشامل
+  basicSalary: 0, // الأساسي للحساب الدقيق للأرباح
+  profitMonths: 0, // عدد الأشهر المقرر للأرباح السنوية (مثل 3.5)
   theme: 'auto',
   att: {},
   leaves: [],
@@ -85,7 +87,11 @@ var S = {
   ramadan: [],
   shiftRates: { mid: 0, night: 0 },
   ramadanOtRate: 0,
-  quota: { annual: 30, casual: 7, sick: 10 }
+  customHourlyRate: 0, // سعر الساعة الإضافية المحدد يدوياً للسلامة
+  taxBracketChoice: 'auto', // اختيار الشريحة يدوياً أو تلقائياً ('auto', '0', '10', '15', '20', '22.5', '25', '27.5')
+  quota: { annual: 30, casual: 7, sick: 10 },
+  manualRepEarned: 0, // رصيد إجازات بدل مضاف/معدل يدوياً
+  manualRepDeducted: 0 // رصيد إجازات بدل مخصوم يدوياً
 };
 
 try {
@@ -113,7 +119,7 @@ var TABS = [
   ['leave', '🏖️', 'الإجازات'],
   ['work', '⏱️', 'الإضافي والسهر'],
   ['shift', '🔄', 'الورديات ورمضان'],
-  ['rep', '📊', 'التقرير المالي'],
+  ['rep', '📊', 'التقرير والربح'],
   ['settings', '⚙️', 'الإعدادات']
 ];
 
@@ -139,18 +145,15 @@ function used(y, t){
   }).reduce(function(a,l){ return a + l.days; }, 0);
 }
 
-function totalReplacementEarned(){
-  return S.work.length;
-}
-
+function totalReplacementEarned(){ return S.work.length; }
 function replacementBalance(){
-  var earned = totalReplacementEarned();
-  var taken = S.leaves.filter(function(l){ return l.type === 'replacement'; }).reduce(function(a,l){ return a + l.days; }, 0);
-  return earned - taken;
+  var earned = totalReplacementEarned() + (S.manualRepEarned || 0);
+  var taken = S.leaves.filter(function(l){ return l.type === 'replacement'; }).reduce(function(a,l){ return a + l.days; }, 0) + (S.manualRepDeducted || 0);
+  return Math.max(0, earned - taken);
 }
 
 function qLabel(q){ return 'الربع '+(q+1)+' ('+['يناير–مارس','أبريل–يونيو','يوليو–سبتمبر','أكتوبر–ديسمبر'][q]+')'; }
-function hourlyRate(){ return (+S.salary || 0) / 240; }
+function hourlyRate(){ return S.customHourlyRate > 0 ? S.customHourlyRate : ((+S.salary || 0) / 240); }
 function dailyRate(){ return (+S.salary || 0) / 30; }
 
 function ovl(a, b, c, d){ return Math.max(0, Math.min(b, d) - Math.max(a, c)) / 60; }
@@ -161,6 +164,7 @@ function otHours(o){
 }
 
 function otPay(o){
+  if (o.customPay > 0) return o.customPay; // إدخال يدوي مباشر لتجنب الأخطاء
   var f = mins(o.from), t = mins(o.to), hr = hourlyRate();
   var dayHrs = ovl(f, t, 16*60, 18*60);
   var nightHrs = ovl(f, t, 18*60, 24*60);
@@ -172,7 +176,7 @@ function money(n){ return Math.round(n || 0).toLocaleString('ar-EG') + ' ج.م';
 function banner(){
   var n = new Date(), y = n.getFullYear(), q = Math.floor(n.getMonth()/3), t = qTotal(y, q);
   if (t > 9) {
-    return '<div class="warn">⚠️ <span><b>تنبيه هام (الربع سنوي):</b> إجمالي الإجازات (السنوية/العارضة/المرضية) في '+qLabel(q)+' هو <b>'+t+' أيام</b>، وهو يزيد عن 9 أيام. (ملاحظة: إجازات البدل لا تُحسب ضمن الـ 9 أيام).</span></div>';
+    return '<div class="warn">⚠️ <span><b>تنبيه هام (الربع سنوي):</b> إجمالي الإجازات (السنوية/العارضة/المرضية) في '+qLabel(q)+' هو <b>'+t+' أيام</b>، وهو يزيد عن 9 أيام. (إجازات البدل لا تُحسب ضمن الـ 9 أيام).</span></div>';
   }
   return '';
 }
@@ -241,6 +245,13 @@ function vLeave(){
 
   h += '<div class="kv" style="margin-top:10px;background:var(--bg);padding:10px;border-radius:10px"><span>🎁 رصيد إجازات البدل (تراكمي تلقائي)</span><b class="big" style="font-size:18px">'+repRem+' يوم متبقي <small style="font-size:12px;font-weight:normal">(مكتسب '+repEarned+' - مأخوذ '+repTaken+')</small></b></div>';
 
+  
+  h += '<div class="card" style="border:1px dashed var(--pr);"><h2>✏️ تعديل وضبط رصيد إجازات البدل يدوياً</h2>';
+  h += '<div class="sub">تعديل رصيد أيام البدل المكتسبة أو المخصومة تحسباً لأي إدخال خاطئ في البيانات:</div>';
+  h += '<div class="row"><div><label>إضافة/تعديل أيام بدل مكتسبة (+)</label><input type="number" step="0.5" id="rep_m_earned" value="'+(S.manualRepEarned||0)+'" placeholder="مثال: 2"></div>';
+  h += '<div><label>تعديل/تسوية أيام بدل مخصومة (-)</label><input type="number" step="0.5" id="rep_m_deducted" value="'+(S.manualRepDeducted||0)+'" placeholder="مثال: 1"></div></div>';
+  h += '<button data-a="save_rep_manual" class="sec" style="margin-top:10px">حفظ تعديلات رصيد البدل</button></div>';
+
   h += '<div class="kv" style="margin-top:10px"><span>مجموع الإجازات المستهلكة في '+qLabel(q)+' (تخضع لشرط الـ 9 أيام)</span><b style="'+(t>9?'color:var(--wr)':'')+'">'+t+' أيام '+(t>9?'(تنبيه!)':'')+'</b></div>';
   h += '<div class="sub" style="margin-top:4px;font-size:11px">ملاحظة: إجازات البدل لا تُحسب إطلاقاً ضمن حد الـ 9 أيام الربع سنوي.</div>';
   h += '<div class="kv"><span>إجمالي إجازات هذا الشهر</span><b>'+mTotal(d.slice(0,7))+' يوم</b></div>';
@@ -276,7 +287,7 @@ function vLeave(){
   h += '<div class="card"><h2>📜 سجل الإجازات المسجلة (مع خيار الحذف)</h2>'+(ls.length ? ls.map(function(o){
     o.ds.sort();
     var f = o.ds[0], e = o.ds[o.ds.length-1];
-    return '<div class="li"><span><b>'+(f===e ? dayName(f) : 'من '+dayName(f)+' إلى '+dayName(e))+'</b><br><small style="color:var(--mu)">نوع: '+NAMES[o.type]+' • المدة: '+o.n+' يوم</small></span><button class="x" data-a="dell" data-i="'+o.k+'">🗑️ حذف</button></div>';
+    return '<div class="li"><span><b>'+(f===e ? dayName(f) : 'من '+dayName(f)+' إلى '+dayName(e))+'</b><br><small style="color:var(--mu)">نوع: '+NAMES[o.type]+' • المدة: '+o.n+' يوم</small></span><div style="display:flex;gap:6px;"><button class="x" style="color:var(--pr);border-color:var(--pr);" data-a="edit_leave_date" data-i="'+o.k+'">✏️ تعديل التاريخ</button><button class="x" data-a="dell" data-i="'+o.k+'">🗑️ حذف</button></div></div>';
   }).join('') : '<div class="empty">لا يوجد إجازات مسجلة حالياً</div>') + '</div>';
 
   return h;
@@ -293,22 +304,25 @@ function vWork(){
   var wp = ws.reduce(function(a,w){ return a + dl + (w.extraOtPay || 0); }, 0);
   var hp = hs.reduce(function(a,w){ return a + (dl * 2) + (w.extraOtPay || 0); }, 0);
 
-  var h = '<h1>ساعات السهر والأعياد والراحات</h1><div class="sub">احتساب تلقائي وحساب البدلات لشهر '+ym+' (وفق قانون العمل)</div>';
-  
-  if (!S.salary) {
-    h += '<div class="warn">⚠️ <span>لم تقم بإدخال راتبك الشهري بعد. يرجى إدخاله لتقوم المنظومة بحساب المستحقات والبدلات المالية بدقة.</span></div>';
-  }
+  var h = '<h1>ساعات السهر والأعياد والراحات</h1><div class="sub">احتساب تلقائي ويدوي دقيق للساعات الإضافية لشهر '+ym+'</div>';
 
-  h += '<div class="card"><h2>🌙 أولاً: تسجيل ساعات السهر والعمل الإضافي (4:00 م - 7:00 م+)</h2>';
+  h += '<div class="card"><h2>⚙️ تخصيص سعر الساعة الإضافية يدوياً (لتجنب الأخطاء)</h2>';
+  h += '<div class="row"><div><label>سعر الساعة الإضافية المحدد يدوياً (جنيه)</label><input type="number" id="cust_hr" value="'+(S.customHourlyRate||'')+'" placeholder="اتركه فارغاً للحساب التلقائي"></div>';
+  h += '<div><button data-a="save_cust_hr" style="margin-top:24px">حفظ سعر الساعة</button></div></div>';
+  h += '<div class="sub" style="margin-top:4px">السعر الحالي المعتمد للساعة: <b>'+money(hourlyRate())+'</b></div></div>';
+
+  h += '<div class="card"><h2>🌙 أولاً: تسجيل ساعات السهر والعمل الإضافي</h2>';
   h += '<label>تاريخ يوم السهر</label><input type="date" id="od" value="'+d+'">';
   h += '<div class="row"><div><label>من الساعة</label><input type="time" id="of" value="16:00"></div><div><label>إلى الساعة</label><input type="time" id="ot" value="19:00"></div></div>';
+  h += '<label>أو أدخل مبلغ/سعر السهر لهذا اليوم يدوياً بالكامل (اختياري)</label><input type="number" id="op_manual" placeholder="مثال: 250 جنيه">';
   h += '<button data-a="ot">حفظ ساعات السهر</button>';
   h += '<div class="kv" style="margin-top:12px"><span>إجمالي إضافي الشهر</span><b>'+os.length+' أيام ('+oh+' ساعة) = '+money(op)+'</b></div>';
   
   if(os.length){
     h += '<div style="margin-top:10px">';
     os.forEach(function(o){
-      h += '<div class="li"><span><b>'+dayName(o.date)+'</b><br><small style="color:var(--mu)">من '+o.from+' إلى '+o.to+' ('+otHours(o)+' ساعة)</small></span><button class="x" data-a="delo" data-i="'+o.id+'">🗑️ حذف</button></div>';
+      var p = otPay(o);
+      h += '<div class="li"><span><b>'+dayName(o.date)+'</b><br><small style="color:var(--mu)">من '+o.from+' إلى '+o.to+' ('+otHours(o)+' ساعة) • المبلغ: '+money(p)+(o.customPay>0?' (محدد يدوياً)':'')+'</small></span><button class="x" data-a="delo" data-i="'+o.id+'">🗑️ حذف</button></div>';
     });
     h += '</div>';
   }
@@ -317,7 +331,7 @@ function vWork(){
   h += '<div class="card"><h2>📅 ثانياً: تسجيل العمل أيام الراحات (الجمعة والسبت)</h2>';
   h += '<div class="sub">تُحسب تلقائياً: <b>أجر يوم كامل + تضاف تلقائياً إلى رصيد إجازات البدل</b>.</div>';
   h += '<label>التاريخ</label><input type="date" id="wd2" value="'+d+'">';
-  h += '<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="w_extra2" style="width:auto"> تمديد سهر في هذا اليوم (بعد 7:00 م)</label>';
+  h += '<label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="w_extra2" style="width:auto"> تمديد سهر في هذا اليوم</label>';
   h += '<button data-a="wkw">تسجيل عمل جمعة / سبت</button>';
   h += '<div class="kv" style="margin-top:12px"><span>إجمالي الجمعة والسبت هذا الشهر</span><b>'+ws.length+' أيام = '+money(wp)+' + '+ws.length+' يوم بدل متراكم</b></div>';
   
@@ -445,17 +459,122 @@ function vRep(){
   var nightPayTotal = nightShifts.reduce(function(a,s){ return a + (s.rate || 0); }, 0);
   var ramadanOtTotal = ramadanDays.reduce(function(a,r){ return a + (r.otRate || 0); }, 0);
 
+  // حساب الأرباح السنوية المستحقة (تعتمد حصرياً على الأجر الأساسي × عدد الأشهر المحددة)
+  var totalAnnualProfit = (+S.basicSalary || 0) * (+S.profitMonths || 0);
+  // ===== 3. محرك الشرائح والاستقطاع الضريبي الفوري المطور =====
+  var selectedBracketPct = 0;
+  var isAutoBracket = (S.taxBracketChoice === 'auto' || !S.taxBracketChoice);
+
+  function getAutoBracketRate(annualIncome) {
+    if (annualIncome <= 40000) return 0;
+    if (annualIncome <= 55000) return 0.10;
+    if (annualIncome <= 70000) return 0.15;
+    if (annualIncome <= 200000) return 0.20;
+    if (annualIncome <= 400000) return 0.225;
+    if (annualIncome <= 1200000) return 0.25;
+    return 0.275;
+  }
+
+  function calcFullProgressiveTax(annualIncome) {
+    if (annualIncome <= 40000) return 0;
+    var taxable = annualIncome - 40000;
+    var tax = 0;
+    if (taxable > 0) { var b1 = Math.min(taxable, 15000); tax += b1 * 0.10; taxable -= b1; }
+    if (taxable > 0) { var b2 = Math.min(taxable, 15000); tax += b2 * 0.15; taxable -= b2; }
+    if (taxable > 0) { var b3 = Math.min(taxable, 130000); tax += b3 * 0.20; taxable -= b3; }
+    if (taxable > 0) { var b4 = Math.min(taxable, 200000); tax += b4 * 0.225; taxable -= b4; }
+    if (taxable > 0) { var b5 = Math.min(taxable, 800000); tax += b5 * 0.25; taxable -= b5; }
+    if (taxable > 0) { tax += taxable * 0.275; }
+    return tax;
+  }
+
+  var annualBaseSalary = (+S.salary || 0) * 12;
+  var estAnnualIncome = annualBaseSalary + totalAnnualProfit + (grandTotalPay * 12);
+
+  if (isAutoBracket) {
+    selectedBracketPct = getAutoBracketRate(estAnnualIncome);
+  } else {
+    selectedBracketPct = parseFloat(S.taxBracketChoice) / 100;
+  }
+
+  // الاستقطاع المباشر من المستحقات والإضافي بناءً على الشريحة المختارة
+  var monthlyExtraGross = grandTotalPay;
+  var monthlyExtraTaxDeduction = monthlyExtraGross * selectedBracketPct;
+  var monthlyExtraNet = monthlyExtraGross - monthlyExtraTaxDeduction;
+
+  var profitTaxDeduction = totalAnnualProfit * selectedBracketPct;
+  var profitNet = totalAnnualProfit - profitTaxDeduction;
+
+  var totalAnnualTaxEst = isAutoBracket ? calcFullProgressiveTax(estAnnualIncome) : (estAnnualIncome * selectedBracketPct);
+  var totalMonthlyTaxEst = totalAnnualTaxEst / 12;
+  var totalDailyTaxEst = totalAnnualTaxEst / 365;
+  var totalHourlyTaxEst = totalAnnualTaxEst / (240 * 12);
+
+  var netMonthlyTotalIncome = (+S.salary || 0) + monthlyExtraNet - (isAutoBracket ? (calcFullProgressiveTax(annualBaseSalary)/12) : ((+S.salary||0)*selectedBracketPct));
+
+
   var grandTotalPay = otMoney + holPay + wkPay + midPayTotal + nightPayTotal + ramadanOtTotal;
   var qT = qTotal(y, q);
 
-  var h = '<h1>التقرير المالي والتراكمي</h1><div class="sub">كشف حساب مستحقات شهر '+ym+' والربع سنوي</div>'+banner();
+  var h = '<h1>التقرير المالي وحساب الأرباح السنوية</h1><div class="sub">كشف كامل بالمستحقات والبدلات والأرباح المستحقة</div>'+banner();
 
-  h += '<div class="card"><h2>💵 أدخل مرتبك الشهري الأساسي</h2>';
-  h += '<div class="row"><div><input type="number" id="sal" value="'+(S.salary||'')+'" placeholder="مثال: 10000"></div><div><button data-a="sal" style="margin-top:0">حفظ المرتب</button></div></div>';
-  h += '<div class="kv"><span>قيمة اليومية (المرتب ÷ 30)</span><b>'+money(dailyRate())+'</b></div>';
-  h += '<div class="kv"><span>قيمة الساعة (المرتب ÷ 240)</span><b>'+money(hourlyRate())+'</b></div></div>';
+  // إدخال المرتبات والأرباح
+  h += '<div class="card"><h2>💵 1. إدخال المرتبات والأجر الأساسي</h2>';
+  h += '<div class="row"><div><label>المرتب الشامل (جنيه)</label><input type="number" id="sal" value="'+(S.salary||'')+'" placeholder="مثال: 10000"></div>';
+  h += '<div><label>الأجر الأساسي فقط (جنيه)</label><input type="number" id="bsal" value="'+(S.basicSalary||'')+'" placeholder="مثال: 4000"></div></div>';
+  h += '<button data-a="sal">حفظ المرتبات</button>';
+  h += '<div class="kv" style="margin-top:10px"><span>قيمة اليومية (الشامل ÷ 30)</span><b>'+money(dailyRate())+'</b></div>';
+  h += '<div class="kv"><span>قيمة الساعة المعتمدة للاحتساب</span><b>'+money(hourlyRate())+'</b></div></div>';
 
-  h += '<div class="card"><label><b>اختر الشهر المعروض:</b></label><input type="month" id="rm" value="'+ym+'">';
+  // قسم حساب الأرباح السنوية بمرونة 
+  h += '<div class="card"><h2>🎁 2. حساب الأرباح والمكافأة السنوية (خاصية جديدة)</h2>';
+  h += '<div class="sub">تُحسب الأرباح السنوية <b>تلقائياً بناءً على الأجر الأساسي فقط</b> ووفق عدد الأشهر التي تقررها الشركة.</div>';
+  h += '<div class="row"><div><label>نسبة الأشهر المقررة للأرباح</label><input type="number" step="0.1" id="pmonths" value="'+(S.profitMonths||'')+'" placeholder="مثال: 3.5 شهر"></div>';
+  h += '<div><button data-a="save_profit" style="margin-top:24px">حفظ الأرباح المستحقة</button></div></div>';
+  h += '<div class="kv" style="margin-top:12px;background:var(--okb);padding:12px;border-radius:10px;border:1px solid var(--ok)"><span>إجمالي الأرباح السنوية المستحقة</span><b class="big" style="color:var(--ok);font-size:20px">'+money(totalAnnualProfit)+'</b></div>';
+  h += '<div class="sub" style="margin-top:4px;font-size:11px">المعادلة: (الأجر الأساسي: '+money(S.basicSalary)+' × '+S.profitMonths+' أشهر = '+money(totalAnnualProfit)+')</div>';
+  h += '</div>';
+
+  
+  // كارت حاسبة واختيار الشريحة الضريبية والخصم الفوري
+  h += '<div class="card" style="border: 2px solid var(--pr); border-radius: 16px; padding: 16px;">';
+  h += '<h2>⚖️ 3. اختيار الشريحة الضريبية والحساب الفوري للخصم</h2>';
+  h += '<div class="sub">اختر الشريحة الضريبية الخاصة بك لتطبيق خصم الضريبة مباشرة على كافة المكافآت والأرباح والإضافيات:</div>';
+  
+  h += '<div class="row" style="margin-bottom: 12px;"><div><label>الشريحة الضريبية المعتمدة</label><select id="tax_bracket_sel">';
+  h += '<option value="auto" '+(S.taxBracketChoice==='auto'?'selected':'')+'>تلقائي (حسب شرائح قانون الضرائب رقم 7)</option>';
+  h += '<option value="0" '+(S.taxBracketChoice==='0'?'selected':'')+'>شريحة 0% (معفى حتى 40 ألف سنوياً)</option>';
+  h += '<option value="10" '+(S.taxBracketChoice==='10'?'selected':'')+'>شريحة 10% (من 40 ألف إلى 55 ألف)</option>';
+  h += '<option value="15" '+(S.taxBracketChoice==='15'?'selected':'')+'>شريحة 15% (من 55 ألف إلى 70 ألف)</option>';
+  h += '<option value="20" '+(S.taxBracketChoice==='20'?'selected':'')+'>شريحة 20% (من 70 ألف إلى 200 ألف)</option>';
+  h += '<option value="22.5" '+(S.taxBracketChoice==='22.5'?'selected':'')+'>شريحة 22.5% (من 200 ألف إلى 400 ألف)</option>';
+  h += '<option value="25" '+(S.taxBracketChoice==='25'?'selected':'')+'>شريحة 25% (من 400 ألف إلى 1.2 مليون)</option>';
+  h += '<option value="27.5" '+(S.taxBracketChoice==='27.5'?'selected':'')+'>شريحة 27.5% (أكثر من 1.2 مليون)</option>';
+  h += '</select></div><div><button data-a="save_tax_bracket" style="margin-top:24px">اعتماد الشريحة</button></div></div>';
+
+  h += '<div class="kv" style="background:var(--infob); padding:10px; border-radius:10px; margin-bottom:10px;">';
+  h += '<span>الشريحة المطبقة حالياً على الخصم</span><b class="big" style="font-size:16px; color:var(--info);">' + (isAutoBracket ? 'احتساب تصاعدي تلقائي' : (S.taxBracketChoice + '% خصم مباشر')) + '</b></div>';
+
+  h += '<h2 style="font-size:15px; margin-top:14px; color:var(--tx);">📌 خصم الضريبة من الأرباح والمكافآت السنوية</h2>';
+  h += '<div class="kv"><span>الأرباح الإجمالية المستحقة قبل الضريبة</span><b>' + money(totalAnnualProfit) + '</b></div>';
+  h += '<div class="kv" style="color:var(--wr)"><span>الضريبة المستقطعة من الأرباح (' + (selectedBracketPct*100) + '%)</span><b style="color:var(--wr)">- ' + money(profitTaxDeduction) + '</b></div>';
+  h += '<div class="kv" style="background:var(--okb); padding:8px; border-radius:8px;"><span>صافي الأرباح السنوية التي تدخل جيبك</span><b style="color:var(--ok)">' + money(profitNet) + '</b></div>';
+
+  h += '<h2 style="font-size:15px; margin-top:14px; color:var(--tx);">🌙 خصم الضريبة من العمل الإضافي والسهر للشهر الحالي</h2>';
+  h += '<div class="kv"><span>إجمالي الإضافيات (سهر، جمعة/سبت، أعياد، ورديات)</span><b>' + money(monthlyExtraGross) + '</b></div>';
+  h += '<div class="kv" style="color:var(--wr)"><span>الخصم الضريبي المستقطع لهذا الشهر</span><b style="color:var(--wr)">- ' + money(monthlyExtraTaxDeduction) + '</b></div>';
+  h += '<div class="kv" style="background:var(--okb); padding:8px; border-radius:8px;"><span>صافي الإضافي النظري المستلم لهذا الشهر</span><b style="color:var(--ok)">' + money(monthlyExtraNet) + '</b></div>';
+
+  h += '<h2 style="font-size:15px; margin-top:14px; color:var(--tx);">⏱️ التقدير الزمني للاستقطاع وصافي الدخل</h2>';
+  h += '<div class="kv"><span>الخصم الضريبي التقديري الشهري</span><b style="color:var(--wr)">' + money(totalMonthlyTaxEst) + ' / شهر</b></div>';
+  h += '<div class="kv"><span>الخصم الضريبي اليومي</span><b>' + money(totalDailyTaxEst) + ' / يوم</b></div>';
+  h += '<div class="kv"><span>الخصم الضريبي بالساعة</span><b>' + money(totalHourlyTaxEst) + ' / ساعة</b></div>';
+  
+  h += '<div class="kv" style="margin-top:10px; background:var(--okb); padding:10px; border-radius:10px; border:1px solid var(--ok)">';
+  h += '<span>إجمالي صافي الدخل الشهري المتوقع (بعد الضريبة)</span><b class="big" style="color:var(--ok); font-size:18px">' + money(netMonthlyTotalIncome) + '</b>';
+  h += '</div></div>';
+
+  h += '<div class="card"><label><b>اختر الشهر المعروض للتقرير الشهري:</b></label><input type="month" id="rm" value="'+ym+'">';
   
   h += '<h2 style="margin-top:16px">📌 ملخص الحضور والانصراف</h2>';
   h += '<div class="kv"><span>أيام الحضور الفعلية</span><b>'+attDays.length+' يوم</b></div>';
@@ -470,7 +589,7 @@ function vRep(){
   h += '<div class="kv"><span>إجمالي إجازات الشهر</span><b>'+mTotal(ym)+' يوم</b></div>';
   h += '<div class="kv"><span>إجمالي الإجازات التي تخضع لشرط '+qLabel(q)+'</span><b style="'+(qT>9?'color:var(--wr)':'')+'">'+qT+' يوم '+(qT>9?'⚠️':'')+'</b></div>';
 
-  h += '<h2 style="margin-top:16px">💰 إجمالي المستحقات المالية الإضافية والورديات</h2>';
+  h += '<h2 style="margin-top:16px">💰 إجمالي المستحقات المالية للشهر الحالي ('+ym+')</h2>';
   h += '<div class="kv"><span>مبلغ ساعات السهر والإضافي</span><b>'+money(otMoney)+' ('+otHrs+' ساعة)</b></div>';
   h += '<div class="kv"><span>بدل العمل في الأعياد الرسمية</span><b>'+money(holPay)+' ('+holDays+' أيام)</b></div>';
   h += '<div class="kv"><span>بدل العمل الجمعة والسبت</span><b>'+money(wkPay)+' ('+wkDays+' أيام)</b></div>';
@@ -478,7 +597,7 @@ function vRep(){
   h += '<div class="kv"><span>أجر الوردية الليلية (11:30م-7:30ص)</span><b>'+money(nightPayTotal)+' ('+nightShifts.length+' يوم)</b></div>';
   h += '<div class="kv"><span>سهر وتمديد رمضان</span><b>'+money(ramadanOtTotal)+' ('+ramadanDays.length+' يوم)</b></div>';
   h += '<div class="kv"><span>أُذونات بدل الراحة المكتسبة هذا الشهر</span><b>'+(holDays + wkDays)+' أيام بدل راحة</b></div>';
-  h += '<div class="kv" style="margin-top:8px"><span>إجمالي المستحقات المالية الصافية</span><b class="big">'+money(grandTotalPay)+'</b></div>';
+  h += '<div class="kv" style="margin-top:8px"><span>إجمالي الإضافي المستحق لهذا الشهر</span><b class="big">'+money(grandTotalPay)+'</b></div>';
   h += '</div>';
 
   return h;
@@ -522,7 +641,7 @@ function render(){
 
   var viewFn = { today: vToday, leave: vLeave, work: vWork, shift: vShift, rep: vRep, settings: vSettings }[tab];
   
-  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>مُنذِر (Monzer)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
+  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>مُنذِر (v8 EditMaster)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
   
   document.getElementById('app').innerHTML = brandHeader + viewFn();
   document.getElementById('nav').innerHTML = TABS.map(function(t){
@@ -530,7 +649,6 @@ function render(){
   }).join('');
 }
 
-// Clean event delegation listener (No inline event attributes anywhere!)
 document.addEventListener('change', function(e){
   if(e.target.id === 'rm' && e.target.value){
     S._ym = e.target.value;
@@ -590,6 +708,26 @@ document.addEventListener('click', function(e){
       });
     }
   }
+    else if(a === 'save_rep_manual'){
+    S.manualRepEarned = parseFloat(V('rep_m_earned')) || 0;
+    S.manualRepDeducted = parseFloat(V('rep_m_deducted')) || 0;
+    alert('تم تعديل رصيد إجازات البدل يدوياً بنجاح ✅');
+  }
+  else if(a === 'edit_leave_date'){
+    var lid = b.dataset.i;
+    var item = S.leaves.find(function(l){ return (l.gid || l.id) == lid; });
+    if(item){
+      var nDate = prompt('أدخل التاريخ الجديد للإجازة (YYYY-MM-DD):', item.date);
+      if(nDate && /^\d{4}-\d{2}-\d{2}$/.test(nDate)){
+        S.leaves.forEach(function(l){
+          if((l.gid || l.id) == lid) l.date = nDate;
+        });
+        alert('تم تعديل تاريخ الإجازة بنجاح ✅');
+      } else if(nDate) {
+        alert('صيغة التاريخ غير صحيحة، يرجى إدخال بصيغة YYYY-MM-DD');
+      }
+    }
+  }
   else if(a === 'quota'){
     S.quota = {
       annual: Math.max(0, parseFloat(V('qa')) || 0),
@@ -601,9 +739,16 @@ document.addEventListener('click', function(e){
   else if(a === 'dell'){
     S.leaves = S.leaves.filter(function(x){ return (x.gid||x.id) != b.dataset.i; });
   }
+  else if(a === 'save_cust_hr'){
+    S.customHourlyRate = parseFloat(V('cust_hr')) || 0;
+    alert('تم حفظ سعر الساعة الإضافية المحدد يدوياً ✅');
+  }
   else if(a === 'ot'){
     var od = V('od');
-    if(od && V('of') && V('ot')) S.ot.push({ id: id, date: od, from: V('of'), to: V('ot') });
+    var custP = parseFloat(V('op_manual')) || 0;
+    if(od && (custP > 0 || (V('of') && V('ot')))){
+      S.ot.push({ id: id, date: od, from: V('of')||'16:00', to: V('ot')||'19:00', customPay: custP });
+    }
   }
   else if(a === 'delo'){ S.ot = S.ot.filter(function(x){ return x.id != b.dataset.i; }); }
   else if(a === 'wkw' || a === 'wkh'){
@@ -664,9 +809,18 @@ document.addEventListener('click', function(e){
   else if(a === 'del_ramadan'){
     S.ramadan = S.ramadan.filter(function(r){ return r.id != b.dataset.i; });
   }
+    else if(a === 'save_tax_bracket'){
+    S.taxBracketChoice = V('tax_bracket_sel') || 'auto';
+    alert('تم حفظ اختيار الشريحة الضريبية المعتمدة بنجاح ✅');
+  }
   else if(a === 'sal'){
     S.salary = parseFloat(V('sal')) || 0;
-    alert('تم حفظ قيمة المرتب الأساسي ✅');
+    S.basicSalary = parseFloat(V('bsal')) || 0;
+    alert('تم حفظ بيانات المرتب الشامل والأجر الأساسي بنجاح ✅');
+  }
+  else if(a === 'save_profit'){
+    S.profitMonths = parseFloat(V('pmonths')) || 0;
+    alert('تم إدراج نسبة الأشهر وحساب الأرباح السنوية المستحقة بنجاح ✅');
   }
   else if(a === 'save_email'){
     S.email = V('uemail');
