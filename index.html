@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
-<title>Monzer App - مُنذِر (v15 Ultimate - Fixed Overtime)</title>
+<title>Monzer App - مُنذِر (v14 Ultimate - Ramadan Corrected)</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232dd4bf'/%3E%3Cstop offset='1' stop-color='%230f766e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='120' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='262' r='140' fill='none' stroke='white' stroke-width='30'/%3E%3Cpath d='M256 176v90l62 40' fill='none' stroke='white' stroke-width='30' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='380' cy='132' r='42' fill='%23fbbf24' stroke='%230f766e' stroke-width='14'/%3E%3C/svg%3E">
 <style>
@@ -89,7 +89,6 @@ var S = {
   shiftRates: { mid: 0, night: 0 },
   ramadanOtRate: 0,
   customHourlyRate: 0,
-  fixedOtPay: 0,
   taxBracketChoice: 'auto',
   quota: { annual: 30, casual: 7, sick: 10 },
   manualRepEarned: 0,
@@ -167,7 +166,6 @@ function otHours(o){
 
 function otPay(o){
   if (o.customPay > 0) return o.customPay;
-  if (S.fixedOtPay > 0) return S.fixedOtPay;
   var hrs = otHours(o);
   var hr = hourlyRate();
   return hrs * hr;
@@ -335,20 +333,16 @@ function vWork(){
 
   var h = '<h1>ساعات السهر والأعياد والراحات</h1><div class="sub">Monzer App - احتساب دقيق للساعات الإضافية لشهر '+ym+'</div>';
 
-  h += '<div class="card"><h2>⚙️ تخصيص أجر السهر الإضافي (بالساعة أو بقيمة يومية ثابتة)</h2>';
-  h += '<div class="row">';
-  h += '<div><label>سعر الساعة الإضافية (جنيه)</label><input type="number" id="cust_hr" value="'+(S.customHourlyRate||'')+'" placeholder="حساب تلقائي"></div>';
-  h += '<div><label>أو قيمة السهر الثابتة لكل يوم (جنيه)</label><input type="number" id="fix_ot" value="'+(S.fixedOtPay||'')+'" placeholder="مثال: 250 جنيه"></div>';
-  h += '</div>';
-  h += '<button data-a="save_cust_hr">حفظ إعدادات أجر السهر</button>';
-  h += '<div class="sub" style="margin-top:6px">'+(S.fixedOtPay > 0 ? 'القيمة الثابتة المعتمدة ليوم السهر: <b style="color:var(--ok)">'+money(S.fixedOtPay)+'</b> (تطبق تلقائياً على كل يوم سهر دون حاجة لإعادة إدخالها)' : 'السعر المعتمد للساعة: <b>'+money(hourlyRate())+'</b>')+'</div></div>';
+  h += '<div class="card"><h2>⚙️ تخصيص سعر الساعة الإضافية يدوياً</h2>';
+  h += '<div class="row"><div><label>سعر الساعة الإضافية المحدد يدوياً (جنيه)</label><input type="number" id="cust_hr" value="'+(S.customHourlyRate||'')+'" placeholder="اتركه فارغاً للحساب التلقائي"></div>';
+  h += '<div><button data-a="save_cust_hr" style="margin-top:24px">حفظ سعر الساعة</button></div></div>';
+  h += '<div class="sub" style="margin-top:4px">السعر الحالي المعتمد للساعة: <b>'+money(hourlyRate())+'</b></div></div>';
 
   h += '<div class="card"><h2>🌙 أولاً: تسجيل ساعات السهر والعمل الإضافي</h2>';
-  h += '<div class="sub">يتم احتساب القيمة تلقائياً حسب القيمة الثابتة المحفوظة أو بسعر الساعة، مع إمكانية تعديل يوم محدد إن أردت.</div>';
   h += '<label>تاريخ يوم السهر</label><input type="date" id="od" value="'+d+'">';
   h += '<div class="row"><div><label>من الساعة</label><input type="time" id="of" value="16:00"></div><div><label>إلى الساعة</label><input type="time" id="ot" value="19:00"></div></div>';
-  h += '<label>تغيير قيمة هذا اليوم فقط (اختياري - اتركها فارغة لاستخدام القيمة الثابتة: '+(S.fixedOtPay > 0 ? money(S.fixedOtPay) : money(hourlyRate() * 3))+')</label><input type="number" id="op_manual" placeholder="اتركها فارغة لتطبيق السعر الثابت">';
-  h += '<button data-a="ot">تسجيل يوم السهر بضغطة واحدة</button>';
+  h += '<label>أو أدخل مبلغ/سعر السهر لهذا اليوم يدوياً بالكامل</label><input type="number" id="op_manual" placeholder="مثال: 250 جنيه">';
+  h += '<button data-a="ot">حفظ ساعات السهر</button>';
   h += '<div class="kv" style="margin-top:12px"><span>إجمالي إضافي الشهر</span><b>'+os.length+' أيام ('+oh+' ساعة) = '+money(op)+'</b></div>';
   
   if(os.length){
@@ -685,7 +679,7 @@ function render(){
 
   var viewFn = { today: vToday, leave: vLeave, work: vWork, weekends: vWeekends, shift: vShift, rep: vRep, settings: vSettings }[tab];
   
-  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>Monzer App (v15 Ultimate)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
+  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>Monzer App (v14 Ultimate)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
   
   document.getElementById('app').innerHTML = brandHeader + viewFn();
   document.getElementById('nav').innerHTML = TABS.map(function(t){
@@ -783,8 +777,7 @@ document.addEventListener('click', function(e){
   }
   else if(a === 'save_cust_hr'){
     S.customHourlyRate = parseFloat(V('cust_hr')) || 0;
-    S.fixedOtPay = parseFloat(V('fix_ot')) || 0;
-    alert('تم حفظ إعدادات أجر وقيمة السهر الثابتة بنجاح ✅');
+    alert('تم حفظ سعر الساعة الإضافية المحدد يدوياً ✅');
   }
   else if(a === 'ot'){
     var od = V('od');
@@ -910,5 +903,18 @@ document.addEventListener('click', function(e){
 
 render();
 </script>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js').then(function(registration) {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    }, function(err) {
+      console.log('ServiceWorker registration failed: ', err);
+    });
+  });
+}
+</script>
+
 </body>
 </html>
