@@ -1,5 +1,5 @@
 
-const CACHE_NAME = 'monzer-app-v15-cache';
+const CACHE_NAME = 'monzer-app-v16-cache';
 const urlsToCache = [
   './index.html',
   './manifest.json'
@@ -11,6 +11,20 @@ self.addEventListener('install', event => {
       .then(cache => {
         return cache.addAll(urlsToCache);
       })
+  );
+});
+
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(cacheName => {
+          if (cacheName !== CACHE_NAME) {
+            return caches.delete(cacheName);
+          }
+        })
+      );
+    })
   );
 });
 
