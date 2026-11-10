@@ -1,11 +1,12 @@
-
-const CACHE_NAME = 'monzer-app-v16-cache';
+const CACHE_NAME = 'monzer-app-v161-cache';
 const urlsToCache = [
+  './',
   './index.html',
   './manifest.json'
 ];
 
 self.addEventListener('install', event => {
+  event.skipWaiting();
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
@@ -24,18 +25,24 @@ self.addEventListener('activate', event => {
           }
         })
       );
-    })
+    }).then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', event => {
+  // Handle navigation and standard fetch requests for offline use
   event.respondWith(
     caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
+      .then(cachedResponse => {
+        if (cachedResponse) {
+          return cachedResponse;
         }
-        return fetch(event.request);
+        return fetch(event.request).catch(() => {
+          // Fallback to index.html for navigation requests when offline
+          if (event.request.mode === 'navigate' || event.request.headers.get('accept').includes('text/html')) {
+            return caches.match('./index.html') || caches.match('./');
+          }
+        });
       })
   );
 });
