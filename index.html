@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0f766e">
-<title>Monzer App - مُنذِر (v16 Ultimate - Offline Ready)</title>
+<title>Monzer App - مُنذِر (v16.1 Ultimate Data Safe)</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%232dd4bf'/%3E%3Cstop offset='1' stop-color='%230f766e'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='512' height='512' rx='120' fill='url(%23g)'/%3E%3Ccircle cx='256' cy='262' r='140' fill='none' stroke='white' stroke-width='30'/%3E%3Cpath d='M256 176v90l62 40' fill='none' stroke='white' stroke-width='30' stroke-linecap='round' stroke-linejoin='round'/%3E%3Ccircle cx='380' cy='132' r='42' fill='%23fbbf24' stroke='%230f766e' stroke-width='14'/%3E%3C/svg%3E">
 <style>
@@ -663,6 +663,12 @@ function vSettings(){
   h += '<button data-a="req_notify">تفعيل الإشعارات اليومية</button>';
   h += '<button data-a="download_ics" class="sec" style="margin-top:8px">📅 إضافة المواعيد لتقويم Google / Apple Calendar</button></div>';
 
+  h += '<div class="card" style="border: 2px solid var(--pr);"><h2>🛡️ ميزة التنزيل التلقائي للنسخة الاحتياطية (حماية قصوى)</h2>';
+  h += '<div class="sub">حفظ نسخة احتياطية مباشرة على ذاكرة الهاتف (مجلد التنزيلات Downloads) لتفادي مسح بيانات المتصفح نهائياً.</div>';
+  h += '<button data-a="auto_backup_download" style="background:var(--ok); color:#fff; font-weight:700;">📥 تنزيل نسخة احتياطية أوتوماتيكية لهاتفك الآن</button>';
+  h += '<div class="sub" style="margin-top:6px; color:var(--ok);">✓ تحميك حتى لو تم مسح بيانات متصفح كروم بالكامل.</div>';
+  h += '</div>';
+
   h += '<div class="card"><h2>💾 النسخ الاحتياطي وتصدير البيانات</h2>';
   h += '<div class="row">';
   h += '<button data-a="exp_json">تصدير النسخة (JSON)</button>';
@@ -685,7 +691,7 @@ function render(){
 
   var viewFn = { today: vToday, leave: vLeave, work: vWork, weekends: vWeekends, shift: vShift, rep: vRep, settings: vSettings }[tab];
   
-  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>Monzer App (v16 Ultimate)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
+  var brandHeader = '<div class="brand-header"><div class="brand">'+ICON_SVG+'<b>Monzer App (v16.1 Data Safe)</b></div><button class="theme-toggle" id="t-toggle" title="تبديل الوضع">🌙</button></div>';
   
   document.getElementById('app').innerHTML = brandHeader + viewFn();
   document.getElementById('nav').innerHTML = TABS.map(function(t){
@@ -881,6 +887,16 @@ document.addEventListener('click', function(e){
     aLink.href = URL.createObjectURL(blob);
     aLink.download = 'monzer_app_backup_' + ds(new Date()) + '.json';
     aLink.click();
+  }
+  else if(a === 'auto_backup_download'){
+    var blob = new Blob([JSON.stringify(S, null, 2)], { type: 'application/json' });
+    var aLink = document.createElement('a');
+    aLink.href = URL.createObjectURL(blob);
+    aLink.download = 'Monzer_App_Secure_Auto_Backup_' + ds(new Date()) + '.json';
+    document.body.appendChild(aLink);
+    aLink.click();
+    document.body.removeChild(aLink);
+    alert('تم تنزيل النسخة الاحتياطية الأوتوماتيكية بنجاح إلى ذاكرة هاتفك (مجلد التنزيلات) 🛡️✅');
   }
   else if(a === 'exp_csv'){
     var csv = "\uFEFFالتاريخ,النوع,التفاصيل\n";
